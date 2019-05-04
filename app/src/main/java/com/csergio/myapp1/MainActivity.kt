@@ -21,29 +21,29 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setSupportActionBar(mainActivity_toolbar)
-        supportActionBar?.title = "친구"
+        setToolbarTitle(0)
 
         mainActivity_bottomNavigationView.setOnNavigationItemSelectedListener {
 
             when(it.itemId){
                 R.id.mainActivity_menu_navigation_friends -> {
                     mainActivity_viewPager.currentItem = 0
-                    supportActionBar?.title = "친구"
+                    setToolbarTitle(0)
                     return@setOnNavigationItemSelectedListener true
                 }
                 R.id.mainActivity_menu_navigation_chat -> {
                     mainActivity_viewPager.currentItem = 1
-                    supportActionBar?.title = "채팅"
+                    setToolbarTitle(1)
                     return@setOnNavigationItemSelectedListener true
                 }
                 R.id.mainActivity_menu_navigation_entertainment -> {
                     mainActivity_viewPager.currentItem = 2
-                    supportActionBar?.title = "오락"
+                    setToolbarTitle(2)
                     return@setOnNavigationItemSelectedListener true
                 }
                 R.id.mainActivity_menu_navigation_settings -> {
                     mainActivity_viewPager.currentItem = 3
-                    supportActionBar?.title = "설정"
+                    setToolbarTitle(3)
                     return@setOnNavigationItemSelectedListener true
                 }
             }
@@ -81,6 +81,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    fun setToolbarTitle(index:Int){
+        when(index){
+            0 -> supportActionBar?.title = "친구"
+            1 -> supportActionBar?.title = "채팅"
+            2 -> supportActionBar?.title = "오락"
+            3 -> supportActionBar?.title = "설정"
+            else -> supportActionBar?.title = ""
+        }
     }
 
 }
