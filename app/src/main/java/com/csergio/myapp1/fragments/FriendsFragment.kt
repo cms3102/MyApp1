@@ -27,6 +27,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+/**
+ * 친구 목록 프래그먼트
+ * */
 class FriendsFragment:Fragment() {
 
     private var friendsList = mutableListOf<User>()
@@ -42,6 +45,7 @@ class FriendsFragment:Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
+        // 서버에서 사용자 목록 가져오기
         RetrofitBuilder.retrofit.create(PostService::class.java)
             .getFriendsList().enqueue(object : Callback<MutableList<User>>{
 
@@ -53,6 +57,7 @@ class FriendsFragment:Fragment() {
                     if (response.isSuccessful){
                         response.body()?.let {
                             for (item in it){
+                                // 친구 목록에서 본인 제외
                                 if (item.user_id != myId){
                                     friendsList.add(item)
                                 }
@@ -96,6 +101,7 @@ class FriendsFragment:Fragment() {
                 userIdList.add(friend.user_id)
 
                 val sqliteHelper = SQLiteHelper(context!!)
+                // 1:1 채팅방 존재 여부 확인 및 생성
                 val chatRoomId = sqliteHelper.makeChatRoom(userIdList, null,"private")
                 Log.d("친구 목록 대화방 아이디", "친구 목록 대화방 아이디 : $chatRoomId")
 

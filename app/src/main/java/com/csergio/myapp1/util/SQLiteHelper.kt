@@ -5,6 +5,8 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.AsyncTask
+import android.os.Handler
+import android.os.Message
 import android.util.Log
 import com.csergio.myapp1.model.ChatRoom
 import com.csergio.myapp1.model.User
@@ -15,6 +17,7 @@ import java.util.*
 class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase?) {
+        // DB 생성
         db?.execSQL(SQL_CREATE_MESSAGES)
         db?.execSQL(SQL_CREATE_READERS)
     }
@@ -22,12 +25,14 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
     }
 
+    // 채팅방 존재 여부 확인 및 생성 메소드
     fun makeChatRoom(userIdList: MutableList<String>?, participantList:MutableList<User>?, mode:String):String{
 
         try {
             var chatRoomId: String
             val uuid = UUID.randomUUID().toString().replace("-","")
 
+            // private - 1:1 채팅방, group - 단체방
             if (mode == "private"){
                 Log.d("방 생성", "멤버 수 2임")
 
@@ -43,6 +48,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                 }
 
                 val call = RetrofitBuilder.retrofit.create(PostService::class.java).isExistRoom(chatRoom)
+                // AsyncTask를 써서 retrofit 동기 방식 호출을 해야 값을 받아오고 나서 return이 실행됨. 정확한 이유는 확인 필요.
                 val result = NetworkCall().execute(call)
                 Log.d("방 확인 결과", "방 확인 결과 : ${result.get()}")
                 chatRoomId = result.get()
@@ -71,36 +77,51 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
         }
     }
 
+    // 메시지 전체 불러오기
     fun loadMessagesFromDB(chatRoomId:String):Cursor{
         val sql = "select * from messages where chatroom_id = '$chatRoomId'"
-        Log.d("sql문", "sql문 : $sql")
         return readableDatabase.rawQuery(sql, null)
     }
 
+    // 최근 추가된 메시지 불러오기
+    fun loadLastMessageFromDB(chatRoomId:String):Cursor{
+        val sql = "select * from messages where chatroom_id = '$chatRoomId' order by message_idx desc limit 1"
+        return readableDatabase.rawQuery(sql, null)
+    }
+
+    // 채팅방 목록 및 최신 메시지 불러오기
     fun loadChatRoomsFromDB():Cursor{
         val sql = "select chatroom_id, sender_name, content, message_date from messages a INNER JOIN (SELECT max(message_idx) as max_message_idx FROM messages group by chatroom_id) b on a.message_idx = b.max_message_idx"
         return readableDatabase.rawQuery(sql, null)
     }
 
+    // 자원 닫기
     private fun closeResources(){
         this.readableDatabase.close()
         this.writableDatabase.close()
         this.close()
     }
 
+    // retrofit 동기 방식 호출을 위한 클래스.
     private inner class NetworkCall:AsyncTask<Call<MutableList<ChatRoom>>,Int, String>(){
+
         override fun doInBackground(vararg params: Call<MutableList<ChatRoom>>?): String {
+
+            // 결과 받아오고 json 변환/파싱을 해야 정상 처리됨. 정확한 이유는 확인 필요.
             val gson = Gson()
             val chatRoomJson = gson.toJson(params[0]?.execute()?.body()?.get(0))
             var result =
                gson.fromJson(chatRoomJson, ChatRoom::class.java)
             Log.d("네트워크 콜 결과", "네트워크 콜 결과 : ${result.chatroom_id}")
+
             return result.chatroom_id
+
         }
 
     }
 
     companion object{
+
         val DATABASE_VERSION = 1
         val DATABASE_NAME = "chat.db"
 
@@ -119,5 +140,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                 "user_id text not null," +
                 "foreign key (message_idx) references messages (message_idx)" +
                 ")"
+
     }
+
 }

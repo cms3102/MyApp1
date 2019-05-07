@@ -23,6 +23,9 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.create
 
+/**
+ * 단체 대화방 생성을 위한 참가 인원 선택 액티비티
+ * */
 class SelectFriendsActivity : AppCompatActivity() {
 
     val userList = mutableListOf<User>()
@@ -35,6 +38,7 @@ class SelectFriendsActivity : AppCompatActivity() {
 
         myId = getSharedPreferences("UserCookie", Context.MODE_PRIVATE).getString("user_id", "")
 
+        // 서버에서 사용자 목록 가져오기
         RetrofitBuilder.retrofit.create(PostService::class.java)
             .getFriendsList().enqueue(object : Callback<MutableList<User>>{
 
@@ -46,11 +50,13 @@ class SelectFriendsActivity : AppCompatActivity() {
                     if (response.isSuccessful){
                         response.body()?.let {
                             for (item in it){
+                                // 목록에서 본인 제외
                                 if (item.user_id != myId){
                                     userList.add(item)
                                 }
                             }
                         }
+                        // 메인 스레드에서 UI 갱신하도록 처리
                         runOnUiThread {
                             selectFriendsActivity_recyclerView.layoutManager = LinearLayoutManager(applicationContext)
                             selectFriendsActivity_recyclerView.adapter = SelectFriendsActivityAdapter()
@@ -67,7 +73,7 @@ class SelectFriendsActivity : AppCompatActivity() {
             if (chatRoomId.isNotEmpty()){
                 val intent = Intent(this, ChatRoomActivity::class.java)
                 intent.putExtra("chatRoomId", chatRoomId)
-//            startActivity(intent)
+                startActivity(intent)
                 Toast.makeText(this, "단체 대화방 생성 버튼 클릭됨", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "단체 대화방 생성 실패", Toast.LENGTH_SHORT).show()

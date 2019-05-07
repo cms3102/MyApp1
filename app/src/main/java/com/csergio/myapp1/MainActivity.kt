@@ -1,28 +1,56 @@
 package com.csergio.myapp1
 
+import android.app.Activity
+import android.app.ActivityManager
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.ServiceInfo
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
+import androidx.core.content.getSystemService
 import androidx.viewpager.widget.ViewPager
 import com.csergio.myapp1.chat.SelectFriendsActivity
-import com.csergio.myapp1.fragments.ChatFragment
-import com.csergio.myapp1.fragments.EntertainmentFragment
-import com.csergio.myapp1.fragments.FriendsFragment
-import com.csergio.myapp1.fragments.SettingsFragment
+import com.github.nkzawa.socketio.client.IO
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    private  val io = NotificationService.getIO()
+    private var myId = ""
+    private lateinit var preferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        preferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
+        myId = preferences.getString("user_id", "")
+
+        // 서비스 확인 및 실행
+        if (!NotificationService.state){
+            Log.d("NotificationService", "메인 액티비티에서 NotificationService 실행함")
+            val serviceIntent = Intent(this, NotificationService::class.java)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+        } else {
+            Log.d("NotificationService", "메인 액티비티에서 NotificationService 실행 취소")
+        }
+
+        // 액션바 대신 툴바 설정
         setSupportActionBar(mainActivity_toolbar)
         setToolbarTitle(0)
 
+        // BottomNavigation과 ViewPager 이벤트 연동
         mainActivity_bottomNavigationView.setOnNavigationItemSelectedListener {
 
             when(it.itemId){
@@ -51,6 +79,7 @@ class MainActivity : AppCompatActivity() {
             return@setOnNavigationItemSelectedListener false
         }
 
+        // ViewPager 어댑터 설정 및 이벤트 처리
         mainActivity_viewPager.adapter = ViewPagerAdapter(supportFragmentManager)
         mainActivity_viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener{
             override fun onPageScrollStateChanged(state: Int) {
@@ -67,11 +96,13 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    // 툴바 메뉴 설정
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
         return true
     }
 
+    // 툴바 이벤트 처리
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
 
         when(item?.itemId){
@@ -83,7 +114,7 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    fun setToolbarTitle(index:Int){
+    private fun setToolbarTitle(index:Int){
         when(index){
             0 -> supportActionBar?.title = "친구"
             1 -> supportActionBar?.title = "채팅"
@@ -91,6 +122,12 @@ class MainActivity : AppCompatActivity() {
             3 -> supportActionBar?.title = "설정"
             else -> supportActionBar?.title = ""
         }
+    }
+
+    override fun onDestroy() {
+        io.disconnect()
+        Log.d("앱 종료", "onDestroy 실행됨")
+        super.onDestroy()
     }
 
 }

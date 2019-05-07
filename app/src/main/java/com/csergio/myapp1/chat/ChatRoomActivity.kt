@@ -1,32 +1,37 @@
 package com.csergio.myapp1.chat
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.os.*
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.os.Handler
-import android.os.Message
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.csergio.myapp1.NotificationService
+import com.csergio.myapp1.NotificationService.Companion.state
 import com.csergio.myapp1.R
+import com.csergio.myapp1.chat.ChatRoomActivity.Companion.adapter
+import com.csergio.myapp1.chat.ChatRoomActivity.Companion.messgeList
+import com.csergio.myapp1.chat.ChatRoomActivity.Companion.recyclerView
+import com.csergio.myapp1.chat.ChatRoomActivity.Companion.sqlite
+import com.csergio.myapp1.model.ChatRoom
+import com.csergio.myapp1.model.Message
 import com.csergio.myapp1.util.SQLiteHelper
-import com.github.nkzawa.emitter.Emitter
-import com.github.nkzawa.socketio.client.IO
-import com.github.nkzawa.socketio.client.Socket
 import kotlinx.android.synthetic.main.activity_chat_room.*
 import kotlinx.android.synthetic.main.item_message.view.*
-import java.lang.RuntimeException
-import java.net.URISyntaxException
+import retrofit2.Call
 
-class ChatRoomActivity : AppCompatActivity() {
+open class ChatRoomActivity : AppCompatActivity() {
 
-    private val socketio = IO.socket("http://192.168.0.13:3000")
-    private var messages = mutableListOf<com.csergio.myapp1.model.Message>()
+    private  val io = NotificationService.getIO()
+    private var messages = mutableListOf<Message>()
     private lateinit var chatRoomID:String
     private lateinit var myId:String
     private lateinit var myName:String
@@ -37,71 +42,116 @@ class ChatRoomActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat_room)
 
+        state = true
+        messageHandler = handler
+
         sqliteHelper = SQLiteHelper(applicationContext)
+        sqlite = sqliteHelper
+
+        chatRoomID = intent.getStringExtra("chatRoomId")
+        Toast.makeText(this, "chatRoomID : ${intent.getStringExtra("chatRoomId")}", Toast.LENGTH_LONG).show()
 
         val sharedPreferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = sharedPreferences.getString("user_id", "")
-        chatRoomID = intent.getStringExtra("chatRoomId")
-        Toast.makeText(this, "chatRoomID : ${intent.getStringExtra("chatRoomId")}", Toast.LENGTH_LONG).show()
         myName = sharedPreferences.getString("user_name", "")
 
         Log.d("마이 네임", "마이 네임 : $myName")
 
+        // DB에서 저장된 메시지 불러오기
         val messageCursor = sqliteHelper.loadMessagesFromDB(chatRoomID)
         while (messageCursor.moveToNext()){
-            val messageModel = com.csergio.myapp1.model.Message()
+
+            val messageModel = Message()
             messageModel.chatroom_id = messageCursor.getString(1)
             messageModel.sender_id = messageCursor.getString(2)
             messageModel.sender_name = messageCursor.getString(3)
             messageModel.content = messageCursor.getString(4)
+
             messages.add(messageModel)
+
         }
+
+        messgeList = messages
 
         chatRoom_recyclerView.layoutManager = LinearLayoutManager(applicationContext)
         chatRoom_recyclerView.adapter = chatRoomActivityAdapter
         chatRoom_recyclerView.scrollToPosition(messages.lastIndex)
 
-        try {
-            socketio.on(Socket.EVENT_CONNECT, Emitter.Listener {
-                Log.d("TAG", "소켓 접속 됨!")
-                socketio.emit("joinRoom", chatRoomID)
-            })
-        } catch (e: URISyntaxException) {
-            e.printStackTrace()
-            throw RuntimeException(e)
-        }
+        adapter = chatRoomActivityAdapter
+        recyclerView = chatRoom_recyclerView
 
         chatRoom_sendButton.setOnClickListener {
+
             val message = chatRoom_editText.text.toString()
 
-            Log.d("메시지 전송", "메시지 전송 전")
             if (message.isEmpty()){
                 Toast.makeText(this, "메시지를 입력해 주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            socketio.emit("sendMessage", message, chatRoomID, myId, myName)
+
+            // 서버로 메시지 전송
+            io.emit("sendMessage", message, chatRoomID, myId, myName)
+
             chatRoom_editText.text?.clear()
-            Log.d("메시지 전송", "메시지 전송 후")
+            Log.d("메시지 전송", "메시지 전송함")
+
         }
 
-        socketio.on("receiveMessage") {
-            val message = com.csergio.myapp1.model.Message()
-            message.content = it[0].toString()
-            message.chatroom_id = it[1].toString()
-            message.sender_id = it[2].toString()
-            message.sender_name = it[3].toString()
-            messages.add(message)
+    }
 
-            sqliteHelper.saveMessageToDB(message)
+    override fun onResume() {
+        refreshList()
+        super.onResume()
+    }
 
-            runOnUiThread {
-                chatRoomActivityAdapter.notifyDataSetChanged()
-                chatRoom_recyclerView.scrollToPosition(messages.lastIndex)
+    // 서비스에서 채팅방 메시지 목록 갱신을 하도록 하기 위한 객체
+    companion object{
+
+        // 외부 클래스 요소 공유를 위한 변수
+        lateinit var sqlite:SQLiteHelper
+        lateinit var messgeList:MutableList<Message>
+        lateinit var adapter:ChatRoomActivityAdapter
+        lateinit var recyclerView: RecyclerView
+        lateinit var messageHandler: Handler
+        // 액티비티 실행 여부 공유를 위한 변수
+        var state = false
+
+        // 새로 받은 메시지 추가 및 UI 갱신
+        fun addLastMessage(chatRoomID:String){
+
+            val messageCursor = sqlite.loadLastMessageFromDB(chatRoomID)
+            while (messageCursor.moveToNext()){
+
+                val messageModel = Message()
+                messageModel.chatroom_id = messageCursor.getString(1)
+                messageModel.sender_id = messageCursor.getString(2)
+                messageModel.sender_name = messageCursor.getString(3)
+                messageModel.content = messageCursor.getString(4)
+
+                messgeList.add(messageModel)
+
             }
 
+            // 메인 스레드에서 UI 갱신하도록 처리
+            val msg = messageHandler.obtainMessage()
+            messageHandler.handleMessage(msg)
+
         }
 
-        socketio.connect()
+    }
+
+    // AsyncTask는 일회용이라 핸들러로 UI 업데이트 처리
+    private val handler = object : Handler(){
+        override fun handleMessage(msg: android.os.Message?) {
+            runOnUiThread {
+                refreshList()
+            }
+        }
+    }
+
+    fun refreshList(){
+        chatRoomActivityAdapter.notifyDataSetChanged()
+        chatRoom_recyclerView.scrollToPosition(messages.lastIndex)
     }
 
     inner class ChatRoomActivityViewHolder(itemView:View):RecyclerView.ViewHolder(itemView){
@@ -145,4 +195,8 @@ class ChatRoomActivity : AppCompatActivity() {
 
     }
 
+    override fun onDestroy() {
+        state = false
+        super.onDestroy()
+    }
 }

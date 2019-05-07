@@ -17,6 +17,9 @@ import com.csergio.myapp1.util.SQLiteHelper
 import kotlinx.android.synthetic.main.fragment_chat.*
 import kotlinx.android.synthetic.main.item_chatroom.view.*
 
+/**
+ * 채팅방 목록 프래그먼트
+ * */
 class ChatFragment:Fragment() {
 
     val chatRoomList = mutableListOf<com.csergio.myapp1.model.Message>()
@@ -26,6 +29,7 @@ class ChatFragment:Fragment() {
 
         sqliteHelper = SQLiteHelper(context!!)
 
+        // DB에서 채팅방 목록 불러오기
         val cursor = sqliteHelper.loadChatRoomsFromDB()
         while (cursor.moveToNext()){
             val message = com.csergio.myapp1.model.Message()

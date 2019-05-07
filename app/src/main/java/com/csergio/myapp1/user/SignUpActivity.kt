@@ -41,7 +41,7 @@ class SignUpActivity : AppCompatActivity() {
 
                 override fun onResponse(call: Call<String>, response: Response<String>) {
                     if (response.isSuccessful){
-                        Toast.makeText(this@SignUpActivity, "${response.body().toString()}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@SignUpActivity, "회원 가입 성공", Toast.LENGTH_SHORT).show()
                         finish()
                     }
                 }
@@ -51,8 +51,4 @@ class SignUpActivity : AppCompatActivity() {
         }
     }
 
-
-    fun requestSignUp(){
-
-    }
 }
