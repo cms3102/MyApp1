@@ -1,18 +1,16 @@
 package com.csergio.myapp1.fragments
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.util.Log
 import android.view.*
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.csergio.myapp1.R
 import com.csergio.myapp1.chat.ChatRoomActivity
-import com.csergio.myapp1.util.RetrofitBuilder
 import com.csergio.myapp1.util.SQLiteHelper
 import kotlinx.android.synthetic.main.fragment_chat.*
 import kotlinx.android.synthetic.main.item_chatroom.view.*
@@ -23,13 +21,35 @@ import kotlinx.android.synthetic.main.item_chatroom.view.*
 class ChatFragment:Fragment() {
 
     val chatRoomList = mutableListOf<com.csergio.myapp1.model.Message>()
-    lateinit var sqliteHelper:SQLiteHelper
+    private lateinit var sqliteHelper:SQLiteHelper
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         sqliteHelper = SQLiteHelper(context!!)
 
+        companionHandler = handler
+        state = true
+
         // DB에서 채팅방 목록 불러오기
+        loadRooms()
+
+        return inflater.inflate(R.layout.fragment_chat, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        refreshList()
+    }
+
+    override fun onResume() {
+        Log.d("ChatFragment","에서 onResume 실행됨")
+        loadRooms()
+        refreshList()
+        super.onResume()
+    }
+
+    private fun loadRooms(){
+        Log.d("ChatFragment","ChatFragment에서 loadRooms 실행됨")
+        chatRoomList.clear()
         val cursor = sqliteHelper.loadChatRoomsFromDB()
         while (cursor.moveToNext()){
             val message = com.csergio.myapp1.model.Message()
@@ -38,13 +58,35 @@ class ChatFragment:Fragment() {
             message.content = cursor.getString(2)
             chatRoomList.add(message)
         }
-
-        return inflater.inflate(R.layout.fragment_chat, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    private fun refreshList(){
+        Log.d("ChatFragment","ChatFragment에서 refreshList 실행됨")
         chatFragment_recyclerView.layoutManager = LinearLayoutManager(context)
         chatFragment_recyclerView.adapter = ChatFragmentAdapter()
+    }
+
+    // 서비스에서 대화방 목록 갱신이 가능하게 하기 위한 객체
+    companion object {
+
+        var state = false
+        private lateinit var companionHandler:Handler
+
+        fun refreshChatRoomList(){
+            val msg = companionHandler.obtainMessage()
+            companionHandler.handleMessage(msg)
+        }
+
+    }
+
+    // UI 스레드에서 갱신 작업을 하기 위한 핸들러
+    val handler = object : Handler(){
+        override fun handleMessage(msg: Message?) {
+            activity?.runOnUiThread {
+                loadRooms()
+                refreshList()
+            }
+        }
     }
 
     inner class ChatFragmentViewHolder(itemView:View):RecyclerView.ViewHolder(itemView){
@@ -77,6 +119,11 @@ class ChatFragment:Fragment() {
             }
         }
 
+    }
+
+    override fun onDestroy() {
+        state = false
+        super.onDestroy()
     }
 
 }

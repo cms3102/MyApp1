@@ -1,6 +1,5 @@
 package com.csergio.myapp1.fragments
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -15,13 +14,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.csergio.myapp1.R
 import com.csergio.myapp1.chat.ChatRoomActivity
 import com.csergio.myapp1.model.User
-import com.csergio.myapp1.util.GetService
 import com.csergio.myapp1.util.PostService
 import com.csergio.myapp1.util.RetrofitBuilder
 import com.csergio.myapp1.util.SQLiteHelper
-import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_friends.view.*
-import kotlinx.android.synthetic.main.item_friend.*
 import kotlinx.android.synthetic.main.item_friend.view.*
 import retrofit2.Call
 import retrofit2.Callback

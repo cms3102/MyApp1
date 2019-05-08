@@ -5,8 +5,6 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.AsyncTask
-import android.os.Handler
-import android.os.Message
 import android.util.Log
 import com.csergio.myapp1.model.ChatRoom
 import com.csergio.myapp1.model.User
@@ -49,7 +47,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
                 val call = RetrofitBuilder.retrofit.create(PostService::class.java).isExistRoom(chatRoom)
                 // AsyncTask를 써서 retrofit 동기 방식 호출을 해야 값을 받아오고 나서 return이 실행됨. 정확한 이유는 확인 필요.
-                val result = NetworkCall().execute(call)
+                val result = PrivateChatCall().execute(call)
                 Log.d("방 확인 결과", "방 확인 결과 : ${result.get()}")
                 chatRoomId = result.get()
 
@@ -57,7 +55,19 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                 return chatRoomId
 
             } else if(mode == "group"){
+
+                val chatRoom = ChatRoom()
+                chatRoom.chatroom_id = uuid
+                chatRoom.member_count = participantList!!.size
+                chatRoom.memberList = participantList
+
+                val call = RetrofitBuilder.retrofit.create(PostService::class.java).makeGroupChat(chatRoom)
+                val result = GroupChatCall().execute(call)
+                Log.d("단체 대화방 생성 결과", "단체 대화방 생성 결과 : ${result.get()}")
+
+                return result.get()
             }
+
         } catch (e: Exception) {
             e.printStackTrace()
             closeResources()
@@ -103,7 +113,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
     }
 
     // retrofit 동기 방식 호출을 위한 클래스.
-    private inner class NetworkCall:AsyncTask<Call<MutableList<ChatRoom>>,Int, String>(){
+    private inner class PrivateChatCall:AsyncTask<Call<MutableList<ChatRoom>>,Int, String>(){
 
         override fun doInBackground(vararg params: Call<MutableList<ChatRoom>>?): String {
 
@@ -116,6 +126,18 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
             return result.chatroom_id
 
+        }
+
+    }
+
+    private inner class GroupChatCall:AsyncTask<Call<String>, Int, String>(){
+
+        override fun doInBackground(vararg params: Call<String>?): String {
+
+            val result = params[0]?.execute()?.body()
+            Log.d("GroupCall 결과", "GroupCall 결과 : $result")
+
+            return result.toString()
         }
 
     }

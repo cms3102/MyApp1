@@ -21,4 +21,7 @@ interface PostService {
     @POST("/chat/checkroom")
     fun isExistRoom(@Body chatroom:ChatRoom):Call<MutableList<ChatRoom>>
 
+    @POST("/chat/groupchat")
+    fun makeGroupChat(@Body chatroom: ChatRoom):Call<String>
+
 }

@@ -1,8 +1,6 @@
 package com.csergio.myapp1.chat
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.os.*
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
@@ -11,22 +9,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.csergio.myapp1.NotificationService
-import com.csergio.myapp1.NotificationService.Companion.state
 import com.csergio.myapp1.R
-import com.csergio.myapp1.chat.ChatRoomActivity.Companion.adapter
-import com.csergio.myapp1.chat.ChatRoomActivity.Companion.messgeList
-import com.csergio.myapp1.chat.ChatRoomActivity.Companion.recyclerView
-import com.csergio.myapp1.chat.ChatRoomActivity.Companion.sqlite
-import com.csergio.myapp1.model.ChatRoom
 import com.csergio.myapp1.model.Message
 import com.csergio.myapp1.util.SQLiteHelper
 import kotlinx.android.synthetic.main.activity_chat_room.*
 import kotlinx.android.synthetic.main.item_message.view.*
-import retrofit2.Call
 
 open class ChatRoomActivity : AppCompatActivity() {
 
@@ -54,8 +44,6 @@ open class ChatRoomActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = sharedPreferences.getString("user_id", "")
         myName = sharedPreferences.getString("user_name", "")
-
-        Log.d("마이 네임", "마이 네임 : $myName")
 
         // DB에서 저장된 메시지 불러오기
         val messageCursor = sqliteHelper.loadMessagesFromDB(chatRoomID)

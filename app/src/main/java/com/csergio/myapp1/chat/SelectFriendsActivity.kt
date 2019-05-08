@@ -53,6 +53,8 @@ class SelectFriendsActivity : AppCompatActivity() {
                                 // 목록에서 본인 제외
                                 if (item.user_id != myId){
                                     userList.add(item)
+                                } else {
+                                    participantList.add(item)
                                 }
                             }
                         }
@@ -74,6 +76,7 @@ class SelectFriendsActivity : AppCompatActivity() {
                 val intent = Intent(this, ChatRoomActivity::class.java)
                 intent.putExtra("chatRoomId", chatRoomId)
                 startActivity(intent)
+                finish()
                 Toast.makeText(this, "단체 대화방 생성 버튼 클릭됨", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "단체 대화방 생성 실패", Toast.LENGTH_SHORT).show()

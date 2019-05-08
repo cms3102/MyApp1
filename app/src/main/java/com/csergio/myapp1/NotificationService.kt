@@ -9,9 +9,8 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.getSystemService
 import com.csergio.myapp1.chat.ChatRoomActivity
+import com.csergio.myapp1.fragments.ChatFragment
 import com.csergio.myapp1.model.Message
 import com.csergio.myapp1.user.LoginActivity
 import com.csergio.myapp1.util.SQLiteHelper
@@ -50,6 +49,7 @@ class NotificationService : Service() {
 
             io.on(Socket.EVENT_CONNECT) {
                 Log.d("TAG", "NotificationService에서 소켓 접속 됨")
+                io.emit("makeConnection", myId)
             }
 
             // 푸시 알림 처리 메소드
@@ -68,10 +68,14 @@ class NotificationService : Service() {
                 // 받은 메시지 DB 저장
                 sqliteHelper.saveMessageToDB(message)
 
-                // 채팅방 메시지 목록 갱신
-                Log.d("챗룸 액티비티 상태 확인", "${ChatRoomActivity.state}")
+                // 대화방 내 메시지 목록 갱신
                 if (ChatRoomActivity.state){
                     ChatRoomActivity.addLastMessage(message.chatroom_id)
+                }
+
+                // 대화방 목록 갱신
+                if(ChatFragment.state){
+                    ChatFragment.refreshChatRoomList()
                 }
 
                 // 내가 보낸 메세지일 경우 알림 방지

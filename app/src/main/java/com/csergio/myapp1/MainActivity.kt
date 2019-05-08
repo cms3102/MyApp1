@@ -1,22 +1,19 @@
 package com.csergio.myapp1
 
-import android.app.Activity
-import android.app.ActivityManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import androidx.core.content.getSystemService
+import androidx.core.view.get
 import androidx.viewpager.widget.ViewPager
 import com.csergio.myapp1.chat.SelectFriendsActivity
-import com.github.nkzawa.socketio.client.IO
+import com.csergio.myapp1.fragments.ChatFragment
+import kotlinx.android.synthetic.main.activity_chat_room.*
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -32,18 +29,20 @@ class MainActivity : AppCompatActivity() {
         preferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = preferences.getString("user_id", "")
 
-        // 서비스 확인 및 실행
-        if (!NotificationService.state){
-            Log.d("NotificationService", "메인 액티비티에서 NotificationService 실행함")
-            val serviceIntent = Intent(this, NotificationService::class.java)
+        if (myId.isNotEmpty()){
+            // 서비스 확인 및 실행
+            if (!NotificationService.state){
+                Log.d("NotificationService", "메인 액티비티에서 NotificationService 실행함")
+                val serviceIntent = Intent(this, NotificationService::class.java)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                startForegroundService(serviceIntent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
             } else {
-                startService(serviceIntent)
+                Log.d("NotificationService", "메인 액티비티에서 NotificationService 실행 취소")
             }
-        } else {
-            Log.d("NotificationService", "메인 액티비티에서 NotificationService 실행 취소")
         }
 
         // 액션바 대신 툴바 설정
@@ -80,7 +79,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // ViewPager 어댑터 설정 및 이벤트 처리
-        mainActivity_viewPager.adapter = ViewPagerAdapter(supportFragmentManager)
+        val viewPagerAdapter = ViewPagerAdapter(supportFragmentManager)
+        mainActivity_viewPager.adapter = viewPagerAdapter
         mainActivity_viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener{
             override fun onPageScrollStateChanged(state: Int) {
             }
