@@ -2,10 +2,10 @@ package com.csergio.myapp1.util
 
 import com.csergio.myapp1.model.ChatRoom
 import com.csergio.myapp1.model.User
+import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.Field
-import retrofit2.http.POST
+import retrofit2.http.*
 
 interface PostService {
 
@@ -23,5 +23,9 @@ interface PostService {
 
     @POST("/chat/groupchat")
     fun makeGroupChat(@Body chatroom: ChatRoom):Call<String>
+
+    @Multipart
+    @POST("/upload/images")
+    fun uploadProfileImage(@Part image:MultipartBody.Part):Call<String>
 
 }
