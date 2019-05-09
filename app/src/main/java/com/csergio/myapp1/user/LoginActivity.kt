@@ -1,24 +1,24 @@
 
 package com.csergio.myapp1.user
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.edit
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.csergio.myapp1.MainActivity
 import com.csergio.myapp1.R
 import com.csergio.myapp1.chat.ChatRoomActivity
 import com.csergio.myapp1.model.User
 import com.csergio.myapp1.util.PostService
 import com.csergio.myapp1.util.RetrofitBuilder
-import com.github.nkzawa.socketio.client.IO
-import com.github.nkzawa.socketio.client.Socket
 import kotlinx.android.synthetic.main.activity_login.*
-import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -31,6 +31,8 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        requirePermissions()
 
         preferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = preferences.getString("user_id", "")
@@ -57,9 +59,21 @@ class LoginActivity : AppCompatActivity() {
 
         lgoinActivity_loginButton.setOnClickListener {
 
+            val camera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            val externalWrite = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            if (!camera && !externalWrite){
+                Toast.makeText(this, "앱 사용에 필요한 권한을 허용해 주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             val user = User()
             user.user_id = loginActivity_editText_email.text.toString()
             user.user_pw = loginActivity_editText_pw.text.toString()
+
+            if (user.user_id.isNullOrEmpty() || user.user_pw.isNullOrEmpty()){
+                Toast.makeText(this, "아이디 또는 비밀번호를 입력해 주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             RetrofitBuilder.retrofit.create(PostService::class.java)
                 .requestLogin(user).enqueue(object : Callback<String>{
@@ -86,5 +100,25 @@ class LoginActivity : AppCompatActivity() {
 
                 })
         }
+    }
+
+    fun requirePermissions(){
+        Log.d("권한 요청 메소드 실행", "권한 요청 메소드 실행")
+        val permissionList = mutableListOf<String>()
+        permissionList.add(Manifest.permission.CAMERA)
+        permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        val deniedPermissions = mutableListOf<String>()
+
+        for (permission in permissionList){
+            if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_DENIED){
+                deniedPermissions.add(permission)
+            }
+        }
+
+        if (deniedPermissions.isNotEmpty()){
+            ActivityCompat.requestPermissions(this, deniedPermissions.toTypedArray(), 111)
+        }
+
     }
 }

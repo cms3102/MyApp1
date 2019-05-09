@@ -1,5 +1,6 @@
 package com.csergio.myapp1
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -9,11 +10,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import androidx.core.view.get
 import androidx.viewpager.widget.ViewPager
 import com.csergio.myapp1.chat.SelectFriendsActivity
-import com.csergio.myapp1.fragments.ChatFragment
-import kotlinx.android.synthetic.main.activity_chat_room.*
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -123,6 +121,7 @@ class MainActivity : AppCompatActivity() {
             else -> supportActionBar?.title = ""
         }
     }
+
 
     override fun onDestroy() {
         io.disconnect()

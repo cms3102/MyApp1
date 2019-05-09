@@ -1,16 +1,14 @@
 package com.csergio.myapp1.user
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
-import com.csergio.myapp1.R
 import com.csergio.myapp1.model.User
 import com.csergio.myapp1.util.PostService
 import com.csergio.myapp1.util.RetrofitBuilder
@@ -19,19 +17,26 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
+import android.content.pm.PackageManager
+import android.media.MediaScannerConnection
+import android.net.Uri
+import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+
 
 class SignUpActivity : AppCompatActivity() {
 
     private val PICK_FROM_ALBUM = 10
     private val PICK_FROM_CAMERA = 11
     private lateinit var imageUri: Uri
+    var aa = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_sign_up)
+        setContentView(com.csergio.myapp1.R.layout.activity_sign_up)
 
         signUpActivity_profileImage.setOnClickListener {
 
@@ -39,21 +44,33 @@ class SignUpActivity : AppCompatActivity() {
                 .setTitle("이미지 소스 선택")
                 .setPositiveButton("카메라") { dialog, which ->
 
-                    var state = Environment.getExternalStorageState()
-                    if (state == Environment.MEDIA_MOUNTED){
-                        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                        if(intent.resolveActivity(packageManager) != null){
+                    val camera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                    val externalWrite = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
-                            val storagePath = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-                            val fileName = SimpleDateFormat("yyyyMMddHHmmss").format(Date())
-                            val imageFile = File.createTempFile(fileName, ".jpg", storagePath)
-                            val imageFilePath = imageFile.absolutePath
-                            // 안드로이드 7.0부터 보안 문제로 Uri.fromFile() 오류 발생해서 FileProvider 써야 됨
-                            imageUri = FileProvider.getUriForFile(this, packageName, imageFile)
+                    if (camera && externalWrite){
 
-                            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
-                            startActivityForResult(intent, PICK_FROM_CAMERA)
+                        var state = Environment.getExternalStorageState()
+                        if (state == Environment.MEDIA_MOUNTED){
+
+                            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                            if(intent.resolveActivity(packageManager) != null){
+                                try {
+
+                                    // 안드로이드 7.0부터 보안 문제로 Uri.fromFile() 오류 발생해서 FileProvider 써야 됨
+                                    val file = createImageFile()
+                                    val filUri = FileProvider.getUriForFile(this, packageName, file)
+
+                                    intent.putExtra(MediaStore.EXTRA_OUTPUT, filUri)
+                                    startActivityForResult(intent, PICK_FROM_CAMERA)
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+
+                            }
+
                         }
+
                     }
 
                 }
@@ -73,8 +90,15 @@ class SignUpActivity : AppCompatActivity() {
 
         signUpActivity_signUpButton.setOnClickListener {
 
+            val email = signUpActivity_editText_email.text.toString()
+            val name = signUpActivity_editText_name.text.toString()
             val pw1 = signUpActivity_editText_pw1.text.toString()
             val pw2 = signUpActivity_editText_pw2.text.toString()
+
+            if (email.isNullOrEmpty() || name.isNullOrEmpty() || pw1.isNullOrEmpty() || pw2.isNullOrEmpty()){
+                Toast.makeText(this, "가입 양식을 모두 채워주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             if (pw1 != pw2) {
                 Toast.makeText(this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
@@ -105,13 +129,49 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
         if (requestCode == PICK_FROM_ALBUM && resultCode == Activity.RESULT_OK) {
             val imageUri = data?.data
             signUpActivity_profileImage.setImageURI(imageUri)
         } else if(requestCode == PICK_FROM_CAMERA && resultCode == Activity.RESULT_OK){
-            Toast.makeText(this, "사진이 저장되었습니다.", Toast.LENGTH_SHORT).show()
             signUpActivity_profileImage.setImageURI(imageUri)
+            // 사진 저장 후 sendBroadcast로 안돼서 미디어 스캐너로 갤러리 갱신
+            val mediaScanner = MediaScanner()
+            mediaScanner.connection.connect()
+            Toast.makeText(this, "사진이 저장되었습니다.", Toast.LENGTH_SHORT).show()
         }
+
+    }
+
+    inner class MediaScanner:MediaScannerConnection.MediaScannerConnectionClient{
+
+        val connection = MediaScannerConnection(applicationContext, this)
+
+        override fun onMediaScannerConnected() {
+            connection.scanFile(aa, null)
+            Log.d("미디어 스캐너", "미디어 스캔 시작")
+        }
+
+        override fun onScanCompleted(path: String?, uri: Uri?) {
+            connection.disconnect()
+            Log.d("미디어 스캐너", "미디어 스캔 종료")
+        }
+
+    }
+
+    private fun createImageFile():File{
+        val fileName = SimpleDateFormat("yyyyMMddHHmmss").format(Date())
+        val storagePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/MySpace")
+        if (!storagePath.isDirectory){
+            storagePath.mkdir()
+        }
+        Log.d("사진 저장 경로", "사진 저장 경로 : $storagePath")
+        val image = File.createTempFile(fileName, ".jpg", storagePath)
+        val imagePath = FileProvider.getUriForFile(this, packageName, image)
+        imageUri = imagePath
+        aa = image.absolutePath
+
+        return image
     }
 
 }
