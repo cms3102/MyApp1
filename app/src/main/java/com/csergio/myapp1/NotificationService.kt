@@ -62,8 +62,9 @@ class NotificationService : Service() {
                 message.chatroom_id = it[1].toString()
                 message.sender_id = it[2].toString()
                 message.sender_name = it[3].toString()
+                message.sender_pic = it[4].toString()
 
-                Log.d("메시지 내용 확인", "${it[0]}, ${it[1]}, ${it[2]}, ${it[3]}")
+                Log.d("메시지 내용 확인", "${it[0]}, ${it[1]}, ${it[2]}, ${it[3]}, ${it[4]}")
 
                 // 받은 메시지 DB 저장
                 sqliteHelper.saveMessageToDB(message)
@@ -126,7 +127,7 @@ class NotificationService : Service() {
                 "message" -> {
                     val intent = Intent(this, LoginActivity::class.java)
                     intent.putExtra("chatRoomId", message.chatroom_id)
-                    Log.d("메시지 내용 확인3", "chatRoomId : ${message.chatroom_id}")
+                    Log.d("메시지 내용 확인3", "chatRoomId : ${message.chatroom_id}, myPicAddress : ${message.sender_pic}")
                     intent.putExtra("pushMessage", "pushMessage")
                     val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
                     notificationBuilder

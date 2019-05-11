@@ -9,6 +9,8 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.csergio.myapp1.R
 import com.csergio.myapp1.chat.ChatRoomActivity
 import com.csergio.myapp1.util.SQLiteHelper
@@ -55,7 +57,8 @@ class ChatFragment:Fragment() {
             val message = com.csergio.myapp1.model.Message()
             message.chatroom_id = cursor.getString(0)
             message.sender_name = cursor.getString(1)
-            message.content = cursor.getString(2)
+            message.sender_pic = cursor.getString(2)
+            message.content = cursor.getString(3)
             chatRoomList.add(message)
         }
     }
@@ -111,6 +114,10 @@ class ChatFragment:Fragment() {
             val room = chatRoomList[position]
             holder.nameTextView.text = room.sender_name
             holder.contentTextView.text = room.content
+            Glide.with(holder.itemView.context)
+                .load(room.sender_pic)
+                .apply(RequestOptions.circleCropTransform())
+                .into(holder.profileImageView)
 
             holder.itemView.setOnClickListener {
                 val intent = Intent(context, ChatRoomActivity::class.java)

@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.csergio.myapp1.R
 import com.csergio.myapp1.model.User
 import com.csergio.myapp1.util.PostService
@@ -30,6 +32,7 @@ class SelectFriendsActivity : AppCompatActivity() {
 
     val userList = mutableListOf<User>()
     lateinit var myId:String
+    private lateinit var myPicAddress:String
     val participantList = mutableListOf<User>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +58,7 @@ class SelectFriendsActivity : AppCompatActivity() {
                                     userList.add(item)
                                 } else {
                                     participantList.add(item)
+                                    myPicAddress = item.user_pic
                                 }
                             }
                         }
@@ -75,6 +79,7 @@ class SelectFriendsActivity : AppCompatActivity() {
             if (chatRoomId.isNotEmpty()){
                 val intent = Intent(this, ChatRoomActivity::class.java)
                 intent.putExtra("chatRoomId", chatRoomId)
+                intent.putExtra("myPicAddress", myPicAddress)
                 startActivity(intent)
                 finish()
                 Toast.makeText(this, "단체 대화방 생성 버튼 클릭됨", Toast.LENGTH_SHORT).show()
@@ -107,6 +112,10 @@ class SelectFriendsActivity : AppCompatActivity() {
 
             val targetUser = userList[position]
             holder.nameTextView.text = targetUser.user_name
+            Glide.with(holder.itemView.context)
+                .load(targetUser.user_pic)
+                .apply(RequestOptions.circleCropTransform())
+                .into(holder.profileImageView)
 
             holder.checkBox.setOnCheckedChangeListener { buttonView, isChecked ->
                 if (isChecked){

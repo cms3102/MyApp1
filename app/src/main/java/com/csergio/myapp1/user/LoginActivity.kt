@@ -75,6 +75,7 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // 로그인 처리
             RetrofitBuilder.retrofit.create(PostService::class.java)
                 .requestLogin(user).enqueue(object : Callback<String>{
                     override fun onFailure(call: Call<String>, t: Throwable) {

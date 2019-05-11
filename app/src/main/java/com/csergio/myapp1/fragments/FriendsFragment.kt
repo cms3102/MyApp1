@@ -2,6 +2,7 @@ package com.csergio.myapp1.fragments
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,6 +12,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.csergio.myapp1.R
 import com.csergio.myapp1.chat.ChatRoomActivity
 import com.csergio.myapp1.model.User
@@ -30,10 +33,12 @@ class FriendsFragment:Fragment() {
 
     private var friendsList = mutableListOf<User>()
     private lateinit var myId:String
+    private lateinit var myPicAddress:String
+    private lateinit var preferences: SharedPreferences
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
-        val preferences = context?.getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
+        preferences = context!!.getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = preferences?.getString("user_id", "").toString()
 
         return inflater.inflate(R.layout.fragment_friends, container, false)
@@ -56,6 +61,9 @@ class FriendsFragment:Fragment() {
                                 // 친구 목록에서 본인 제외
                                 if (item.user_id != myId){
                                     friendsList.add(item)
+                                } else {
+                                    myPicAddress = item.user_pic
+                                    preferences.edit().putString("user_pic", item.user_pic).apply()
                                 }
                             }
                             view.fragment_friends_recyclerView.layoutManager = LinearLayoutManager(context)
@@ -89,6 +97,11 @@ class FriendsFragment:Fragment() {
 
             val friend = friendsList[position]
             holder.nameTextView.text = friend.user_name
+//            Log.d("사진 URL", "사진 URL : ${friend.user_pic}")
+            Glide.with(holder.itemView.context)
+                .load(friend.user_pic)
+                .apply(RequestOptions.circleCropTransform())
+                .into(holder.profileImageView)
 
             holder.itemView.setOnClickListener {
 
@@ -104,6 +117,7 @@ class FriendsFragment:Fragment() {
                 if (chatRoomId.isNotEmpty()){
                     val intent = Intent(context, ChatRoomActivity::class.java)
                     intent.putExtra("chatRoomId", chatRoomId)
+                    intent.putExtra("myPicAddress", myPicAddress)
                     startActivity(intent)
                 } else {
                     Toast.makeText(context, "대화방 생성 실패", Toast.LENGTH_SHORT).show()

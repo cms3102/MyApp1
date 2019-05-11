@@ -78,7 +78,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
     fun saveMessageToDB(message: com.csergio.myapp1.model.Message){
         try {
-            val sql = "insert into messages(chatroom_id, sender_id, sender_name, content) values('${message.chatroom_id}', '${message.sender_id}', '${message.sender_name}', '${message.content}')"
+            val sql = "insert into messages(chatroom_id, sender_id, sender_name, sender_pic, content) values('${message.chatroom_id}', '${message.sender_id}', '${message.sender_name}', '${message.sender_pic}', '${message.content}')"
             Log.d("수신 메시지 DB 저장 SQL", "수신 메시지 DB 저장 SQL : $sql")
             this.writableDatabase.execSQL(sql)
             Log.d("수신 메시지 DB 저장됨", "수신 메시지 DB 저장됨")
@@ -101,7 +101,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
     // 채팅방 목록 및 최신 메시지 불러오기
     fun loadChatRoomsFromDB():Cursor{
-        val sql = "select chatroom_id, sender_name, content, message_date from messages a INNER JOIN (SELECT max(message_idx) as max_message_idx FROM messages group by chatroom_id) b on a.message_idx = b.max_message_idx"
+        val sql = "select chatroom_id, sender_name, sender_pic, content, message_date from messages a INNER JOIN (SELECT max(message_idx) as max_message_idx FROM messages group by chatroom_id) b on a.message_idx = b.max_message_idx"
         return readableDatabase.rawQuery(sql, null)
     }
 
@@ -152,6 +152,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                 "chatroom_id text not null," +
                 "sender_id text not null," +
                 "sender_name text not null," +
+                "sender_pic text," +
                 "content text," +
                 "message_date datetime" +
                 ")"

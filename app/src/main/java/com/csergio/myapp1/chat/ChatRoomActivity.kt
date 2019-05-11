@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.csergio.myapp1.NotificationService
 import com.csergio.myapp1.R
 import com.csergio.myapp1.model.Message
@@ -25,6 +27,7 @@ open class ChatRoomActivity : AppCompatActivity() {
     private lateinit var chatRoomID:String
     private lateinit var myId:String
     private lateinit var myName:String
+    private var myPicAddress = ""
     private val chatRoomActivityAdapter = ChatRoomActivityAdapter()
     private lateinit var sqliteHelper:SQLiteHelper
 
@@ -39,11 +42,14 @@ open class ChatRoomActivity : AppCompatActivity() {
         sqlite = sqliteHelper
 
         chatRoomID = intent.getStringExtra("chatRoomId")
-        Toast.makeText(this, "chatRoomID : ${intent.getStringExtra("chatRoomId")}", Toast.LENGTH_LONG).show()
+        Log.d("대화방 아이디", "대화방 아이디 : ${intent.getStringExtra("chatRoomId")}")
+//        Toast.makeText(this, "chatRoomID : ${intent.getStringExtra("chatRoomId")}", Toast.LENGTH_LONG).show()
+        Log.d("사진 URL", "사진 URL : ${intent.getStringExtra("myPicAddress")}")
 
         val sharedPreferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = sharedPreferences.getString("user_id", "")
         myName = sharedPreferences.getString("user_name", "")
+        myPicAddress = sharedPreferences.getString("user_pic", "")
 
         // DB에서 저장된 메시지 불러오기
         val messageCursor = sqliteHelper.loadMessagesFromDB(chatRoomID)
@@ -53,7 +59,8 @@ open class ChatRoomActivity : AppCompatActivity() {
             messageModel.chatroom_id = messageCursor.getString(1)
             messageModel.sender_id = messageCursor.getString(2)
             messageModel.sender_name = messageCursor.getString(3)
-            messageModel.content = messageCursor.getString(4)
+            messageModel.sender_pic = messageCursor.getString(4)
+            messageModel.content = messageCursor.getString(5)
 
             messages.add(messageModel)
 
@@ -78,7 +85,7 @@ open class ChatRoomActivity : AppCompatActivity() {
             }
 
             // 서버로 메시지 전송
-            io.emit("sendMessage", message, chatRoomID, myId, myName)
+            io.emit("sendMessage", message, chatRoomID, myId, myName, myPicAddress)
 
             chatRoom_editText.text?.clear()
             Log.d("메시지 전송", "메시지 전송함")
@@ -114,7 +121,8 @@ open class ChatRoomActivity : AppCompatActivity() {
                 messageModel.chatroom_id = messageCursor.getString(1)
                 messageModel.sender_id = messageCursor.getString(2)
                 messageModel.sender_name = messageCursor.getString(3)
-                messageModel.content = messageCursor.getString(4)
+                messageModel.sender_pic = messageCursor.getString(4)
+                messageModel.content = messageCursor.getString(5)
 
                 messgeList.add(messageModel)
 
@@ -168,6 +176,10 @@ open class ChatRoomActivity : AppCompatActivity() {
             val item = messages[position]
             holder.contentTextView.text = item.content
             holder.nameTextView.text = item.sender_name
+            Glide.with(holder.itemView.context)
+                .load(item.sender_pic)
+                .apply(RequestOptions.circleCropTransform())
+                .into(holder.profileImageView)
 
             if (item.sender_id != myId){
                 holder.contentTextView.setBackgroundResource(R.drawable.leftbubble)

@@ -4,6 +4,7 @@ class Message {
 
     var sender_id = ""
     var sender_name = ""
+    var sender_pic = ""
     var chatroom_id = ""
     var content = ""
     var timestamp = ""
