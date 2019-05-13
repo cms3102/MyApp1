@@ -171,6 +171,7 @@ open class ChatRoomActivity : AppCompatActivity() {
 
         }
 
+        // 메시지 읽음 처리 및 UI 갱신
         fun refreshReadCount(targetRoomID:String, targetUserId:String){
             if (targetRoomID == thisRoomId){
                 sqlite.inputReaders(messgeList, targetUserId)
@@ -179,6 +180,7 @@ open class ChatRoomActivity : AppCompatActivity() {
             }
         }
 
+        // 메인스레드에서 DB에서 전체 메시지 불러오기
         fun reloadMessages(){
             val msg = messageHandler.obtainMessage()
             messageHandler.handleMessage(msg)
@@ -252,23 +254,23 @@ open class ChatRoomActivity : AppCompatActivity() {
                     holder.contentTextView.setBackgroundResource(R.drawable.rightbubble)
                     holder.linearLayout.gravity = Gravity.RIGHT
                     holder.rightReadCountTextView.visibility = View.INVISIBLE
-//                    if (item.readcount.toInt() > 0){
+                    if (item.readcount.toInt() > 0){
                         holder.leftReadCountTextView.visibility = View.VISIBLE
                         holder.leftReadCountTextView.text = item.readcount
-//                    } else {
-//                        holder.leftReadCountTextView.visibility = View.INVISIBLE
-//                    }
+                    } else {
+                        holder.leftReadCountTextView.visibility = View.INVISIBLE
+                    }
                 }
                 else -> {
                     holder.contentTextView.setBackgroundResource(R.drawable.leftbubble)
                     holder.linearLayout.gravity = Gravity.LEFT
                     holder.leftReadCountTextView.visibility = View.INVISIBLE
-//                    if (item.readcount.toInt() > 0){
+                    if (item.readcount.toInt() > 0){
                         holder.rightReadCountTextView.visibility = View.VISIBLE
                         holder.rightReadCountTextView.text = item.readcount
-//                    } else {
-//                        holder.rightReadCountTextView.visibility = View.INVISIBLE
-//                    }
+                    } else {
+                        holder.rightReadCountTextView.visibility = View.INVISIBLE
+                    }
                 }
             }
 
