@@ -63,15 +63,24 @@ class NotificationService : Service() {
                 message.sender_id = it[2].toString()
                 message.sender_name = it[3].toString()
                 message.sender_pic = it[4].toString()
+                message.timestamp = it[5].toString()
+                message.readcount = it[6].toString()
 
-                Log.d("메시지 내용 확인", "${it[0]}, ${it[1]}, ${it[2]}, ${it[3]}, ${it[4]}")
+                Log.d("메시지 내용 확인", "${it[0]}, ${it[1]}, ${it[2]}, ${it[3]}, ${it[4]}, ${it[5]}, ${it[6]}")
 
                 // 받은 메시지 DB 저장
-                sqliteHelper.saveMessageToDB(message)
+                val newRowId = sqliteHelper.saveMessageToDB(message)
+                Log.d("메시지 인서트 결과", "메시지 인서트 결과 : $newRowId")
 
                 // 대화방 내 메시지 목록 갱신
                 if (ChatRoomActivity.state){
-                    ChatRoomActivity.addLastMessage(message.chatroom_id)
+                    // 보낸 사람 및 내가 메시지 읽은 것 반영
+                    ChatRoomActivity.addLastMessage(message.chatroom_id, message.sender_id)
+                    // 받은 메시지 내가 읽었다고 알림
+                    io.emit("sendReaderInfo", myId, message.chatroom_id)
+                } else {
+                    // 보낸 사람이 메시지 읽은 것 반영
+                    sqliteHelper.inputReader(message.chatroom_id, newRowId, message.sender_id)
                 }
 
                 // 대화방 목록 갱신
@@ -82,6 +91,37 @@ class NotificationService : Service() {
                 // 내가 보낸 메세지일 경우 알림 방지
                 if (message.sender_id != myId){
                     createNotification("message", message)
+                }
+
+            }
+
+            // 나 이외 다른 사람이 메시지 읽은 것 반영
+            io.on("receiveReaderInfo"){
+
+                val readerId = it[0].toString()
+                val chatRoomId = it[1].toString()
+
+                if (readerId != myId){
+                    Log.d("receiveReaderInfo", "readerId : $readerId / myId : $myId / chatRoomId : $chatRoomId")
+
+                    Log.d("receiveReader", "receiveReader 실행됨")
+
+                    if (ChatRoomActivity.state){
+                        Log.d("receiveReader", "챗룸 액티비티 실행 중")
+                        ChatRoomActivity.refreshReadCount(chatRoomId, readerId)
+                    } else {
+                        Log.d("receiveReader", "챗룸 액티비티 없음")
+                        // DB에서 저장된 메시지 불러오기
+                        val messages = mutableListOf<Message>()
+                        val messageCursor = sqliteHelper.loadMessagesFromDB(chatRoomId)
+                        while (messageCursor.moveToNext()){
+                            val messageModel = Message()
+                            messageModel.message_idx = messageCursor.getInt(0)
+                            messageModel.chatroom_id = messageCursor.getString(1)
+                            messages.add(messageModel)
+                        }
+                        sqliteHelper.inputReaders(messages, readerId)
+                    }
                 }
 
             }

@@ -59,6 +59,7 @@ class ChatFragment:Fragment() {
             message.sender_name = cursor.getString(1)
             message.sender_pic = cursor.getString(2)
             message.content = cursor.getString(3)
+            message.timestamp = cursor.getString(4)
             chatRoomList.add(message)
         }
     }
@@ -118,6 +119,7 @@ class ChatFragment:Fragment() {
                 .load(room.sender_pic)
                 .apply(RequestOptions.circleCropTransform())
                 .into(holder.profileImageView)
+            holder.timestampTextView.text = room.timestamp
 
             holder.itemView.setOnClickListener {
                 val intent = Intent(context, ChatRoomActivity::class.java)
