@@ -53,7 +53,7 @@ class NotificationService : Service() {
             }
 
             // 푸시 알림 처리 메소드
-            io.on("receivePushMessage"){
+            io.on("receivePushMessage") {
 
                 Log.d("receivePushMessage", "receivePushMessage 실행됨!!!!!!!!!!")
 
@@ -73,7 +73,7 @@ class NotificationService : Service() {
                 Log.d("메시지 인서트 결과", "메시지 인서트 결과 : $newRowId")
 
                 // 대화방 내 메시지 목록 갱신
-                if (ChatRoomActivity.state){
+                if (ChatRoomActivity.state) {
                     // 보낸 사람 및 내가 메시지 읽은 것 반영
                     ChatRoomActivity.addLastMessage(message.chatroom_id, message.sender_id)
                     // 받은 메시지 내가 읽었다고 알림
@@ -84,29 +84,29 @@ class NotificationService : Service() {
                 }
 
                 // 대화방 목록 갱신
-                if(ChatFragment.state){
+                if (ChatFragment.state) {
                     ChatFragment.refreshChatRoomList()
                 }
 
                 // 내가 보낸 메세지일 경우 알림 방지
-                if (message.sender_id != myId){
+                if (message.sender_id != myId) {
                     createNotification("message", message)
                 }
 
             }
 
             // 나 이외 다른 사람이 메시지 읽은 것 반영
-            io.on("receiveReaderInfo"){
+            io.on("receiveReaderInfo") {
 
                 val readerId = it[0].toString()
                 val chatRoomId = it[1].toString()
 
-                if (readerId != myId){
+                if (readerId != myId) {
                     Log.d("receiveReaderInfo", "readerId : $readerId / myId : $myId / chatRoomId : $chatRoomId")
 
                     Log.d("receiveReader", "receiveReader 실행됨")
 
-                    if (ChatRoomActivity.state){
+                    if (ChatRoomActivity.state) {
                         Log.d("receiveReader", "챗룸 액티비티 실행 중")
                         ChatRoomActivity.refreshReadCount(chatRoomId, readerId)
                     } else {
@@ -114,7 +114,7 @@ class NotificationService : Service() {
                         // DB에서 저장된 메시지 불러오기
                         val messages = mutableListOf<Message>()
                         val messageCursor = sqliteHelper.loadMessagesFromDB(chatRoomId)
-                        while (messageCursor.moveToNext()){
+                        while (messageCursor.moveToNext()) {
                             val messageModel = Message()
                             messageModel.message_idx = messageCursor.getInt(0)
                             messageModel.chatroom_id = messageCursor.getString(1)
@@ -138,12 +138,12 @@ class NotificationService : Service() {
 
     companion object {
 
-        private val io = IO.socket("http://192.168.0.13:3000")
+        private val io = IO.socket("http://ec2-52-79-251-44.ap-northeast-2.compute.amazonaws.com:3000")
 
         // 서비스 객체 중복 생성 방지를 위한 상태 변수
         var state = false
 
-        fun getIO():Socket{
+        fun getIO(): Socket {
             return io
         }
 
@@ -153,17 +153,18 @@ class NotificationService : Service() {
         return null
     }
 
-    private fun createNotification(type:String, message: Message){
+    private fun createNotification(type: String, message: Message) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            val notificationChannel = NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_DEFAULT)
+            val notificationChannel =
+                NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager.createNotificationChannel(notificationChannel)
 
             val notificationBuilder = NotificationCompat.Builder(this@NotificationService, notificationChannel.id)
-            when(type){
+            when (type) {
                 "message" -> {
                     val intent = Intent(this, LoginActivity::class.java)
                     intent.putExtra("chatRoomId", message.chatroom_id)

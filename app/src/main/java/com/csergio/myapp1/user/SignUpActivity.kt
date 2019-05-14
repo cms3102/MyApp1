@@ -140,7 +140,7 @@ class SignUpActivity : AppCompatActivity() {
 
                     override fun onResponse(call: Call<String>, response: Response<String>) {
                         profileImageUri = response.body().toString()
-                        Toast.makeText(this@SignUpActivity, "프로필 이미지 업로드 성공 : $profileImageUri", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(this@SignUpActivity, "프로필 이미지 업로드 성공 : $profileImageUri", Toast.LENGTH_SHORT).show()
 
                         val newUser = User()
                         newUser.user_id = email
