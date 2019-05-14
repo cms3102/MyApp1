@@ -121,11 +121,4 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    override fun onDestroy() {
-        io.disconnect()
-        Log.d("앱 종료", "onDestroy 실행됨")
-        super.onDestroy()
-    }
-
 }

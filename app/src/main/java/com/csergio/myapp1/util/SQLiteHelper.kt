@@ -37,7 +37,6 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
             // private - 1:1 채팅방, group - 단체방
             if (mode == "private"){
-                Log.d("방 생성", "멤버 수 2임")
 
                 val chatRoom = ChatRoom()
                 chatRoom.chatroom_id = uuid
@@ -53,10 +52,10 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                 val call = RetrofitBuilder.retrofit.create(PostService::class.java).isExistRoom(chatRoom)
                 // AsyncTask를 써서 retrofit 동기 방식 호출을 해야 값을 받아오고 나서 return이 실행됨. 정확한 이유는 확인 필요.
                 val result = PrivateChatCall().execute(call)
-                Log.d("방 확인 결과", "방 확인 결과 : ${result.get()}")
+//                Log.d("방 확인 결과", "방 확인 결과 : ${result.get()}")
                 chatRoomId = result.get()
 
-                Log.d("방 생성 결과", "방 생성 결과 : $chatRoomId")
+//                Log.d("방 생성 결과", "방 생성 결과 : $chatRoomId")
                 return chatRoomId
 
             } else if(mode == "group"){
@@ -68,7 +67,7 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
                 val call = RetrofitBuilder.retrofit.create(PostService::class.java).makeGroupChat(chatRoom)
                 val result = GroupChatCall().execute(call)
-                Log.d("단체 대화방 생성 결과", "단체 대화방 생성 결과 : ${result.get()}")
+//                Log.d("단체 대화방 생성 결과", "단체 대화방 생성 결과 : ${result.get()}")
 
                 return result.get()
             }
@@ -95,7 +94,6 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
             values.put("content", message.content)
             values.put("message_date", message.timestamp)
             values.put("readcount", message.readcount.toInt())
-            Log.d("수신 메시지 DB 저장 전", "수신 메시지 DB 저장 전 : ${message.readcount.toInt()}")
             val result = writableDatabase.insert("messages", null, values)
             Log.d("수신 메시지 DB 저장됨", "수신 메시지 DB 저장됨")
             newRawId = result.toInt()

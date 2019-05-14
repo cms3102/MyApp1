@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.csergio.myapp1.chat.ChatRoomActivity
 import com.csergio.myapp1.fragments.ChatFragment
@@ -27,10 +26,9 @@ class NotificationService : Service() {
     private lateinit var preferences: SharedPreferences
     private var myId = ""
     private lateinit var sqliteHelper: SQLiteHelper
+    private var isRightRoom = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        Toast.makeText(this, "알림 서비스 실행됨!", Toast.LENGTH_LONG).show()
 
         Log.d("TAG", "NotificationService 실행됨")
 
@@ -47,10 +45,7 @@ class NotificationService : Service() {
 
         try {
 
-            io.on(Socket.EVENT_CONNECT) {
-                Log.d("TAG", "NotificationService에서 소켓 접속 됨")
-                io.emit("makeConnection", myId)
-            }
+//            io.on(Socket.EVENT_CONNECT) {} // Socket.EVENT_CONNECT 이벤트는 서버쪽에 다른 클라이언트가 socket.io로 접속해도 발생함. 서버쪽 socket.io에 접속이 발생할 때마다 캐치함.
 
             // 푸시 알림 처리 메소드
             io.on("receivePushMessage") {
@@ -74,10 +69,13 @@ class NotificationService : Service() {
 
                 // 대화방 내 메시지 목록 갱신
                 if (ChatRoomActivity.state) {
-                    // 보낸 사람 및 내가 메시지 읽은 것 반영
-                    ChatRoomActivity.addLastMessage(message.chatroom_id, message.sender_id)
-                    // 받은 메시지 내가 읽었다고 알림
-                    io.emit("sendReaderInfo", myId, message.chatroom_id)
+                    // 보낸 사람 및 내가 메시지 읽은 것 반영하고 받은 메시지가 실행 중인 대화방 게 맞는지 결과 받기
+                    isRightRoom = ChatRoomActivity.addLastMessage(message.chatroom_id, message.sender_id)
+                    Log.d("isRightRoom 결과", "isRightRoom 결과 : $isRightRoom")
+                    // 위의 결과 값에 따라 내가 읽었다고 알림
+                    if(isRightRoom){
+                        io.emit("sendReaderInfo", myId, message.chatroom_id, newRowId)
+                    }
                 } else {
                     // 보낸 사람이 메시지 읽은 것 반영
                     sqliteHelper.inputReader(message.chatroom_id, newRowId, message.sender_id)
@@ -88,10 +86,12 @@ class NotificationService : Service() {
                     ChatFragment.refreshChatRoomList()
                 }
 
-                // 내가 보낸 메세지일 경우 알림 방지
-                if (message.sender_id != myId) {
+                // 내가 보낸 메세지일 경우 또는 대화방을 보고 있을 경우 알림 방지
+                if (message.sender_id != myId && !isRightRoom) {
                     createNotification("message", message)
                 }
+
+                isRightRoom = false
 
             }
 
@@ -102,31 +102,33 @@ class NotificationService : Service() {
                 val chatRoomId = it[1].toString()
 
                 if (readerId != myId) {
-                    Log.d("receiveReaderInfo", "readerId : $readerId / myId : $myId / chatRoomId : $chatRoomId")
 
                     Log.d("receiveReader", "receiveReader 실행됨")
+                    Log.d("receiveReaderInfo", "readerId : $readerId / myId : $myId / chatRoomId : $chatRoomId")
 
                     if (ChatRoomActivity.state) {
                         Log.d("receiveReader", "챗룸 액티비티 실행 중")
-                        ChatRoomActivity.refreshReadCount(chatRoomId, readerId)
+                        val isRightRoom = ChatRoomActivity.refreshReadCount(chatRoomId, readerId)
+                        if (!isRightRoom){
+                            if (it[2] != null){
+                                val messageIdx = it[2].toString().toInt()
+                                sqliteHelper.inputReader(chatRoomId, messageIdx, readerId)
+                            } else {
+                                loadMessages(chatRoomId, readerId)
+                            }
+                        }
                     } else {
                         Log.d("receiveReader", "챗룸 액티비티 없음")
-                        // DB에서 저장된 메시지 불러오기
-                        val messages = mutableListOf<Message>()
-                        val messageCursor = sqliteHelper.loadMessagesFromDB(chatRoomId)
-                        while (messageCursor.moveToNext()) {
-                            val messageModel = Message()
-                            messageModel.message_idx = messageCursor.getInt(0)
-                            messageModel.chatroom_id = messageCursor.getString(1)
-                            messages.add(messageModel)
-                        }
-                        sqliteHelper.inputReaders(messages, readerId)
+                        loadMessages(chatRoomId, readerId)
                     }
                 }
 
             }
 
             io.connect()
+
+            io.emit("makeConnection", myId)
+            Log.d("makeConnection", "NotificationService에서 makeConnection 실행됨")
 
         } catch (e: URISyntaxException) {
             e.printStackTrace()
@@ -151,6 +153,19 @@ class NotificationService : Service() {
 
     override fun onBind(intent: Intent): IBinder? {
         return null
+    }
+
+    // DB에서 저장된 메시지 불러오기 및 읽음 처리
+    private fun loadMessages(room:String, reader:String){
+        val messages = mutableListOf<Message>()
+        val messageCursor = sqliteHelper.loadMessagesFromDB(room)
+        while (messageCursor.moveToNext()) {
+            val messageModel = Message()
+            messageModel.message_idx = messageCursor.getInt(0)
+            messageModel.chatroom_id = messageCursor.getString(1)
+            messages.add(messageModel)
+        }
+        sqliteHelper.inputReaders(messages, reader)
     }
 
     private fun createNotification(type: String, message: Message) {
@@ -192,6 +207,7 @@ class NotificationService : Service() {
 
     override fun onDestroy() {
         state = false
+        io.disconnect()
         super.onDestroy()
     }
 

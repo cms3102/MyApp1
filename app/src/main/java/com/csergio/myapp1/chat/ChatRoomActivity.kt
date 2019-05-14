@@ -46,7 +46,7 @@ open class ChatRoomActivity : AppCompatActivity() {
         thisRoomId = chatRoomID
         Log.d("대화방 아이디", "대화방 아이디 : ${intent.getStringExtra("chatRoomId")}")
 //        Toast.makeText(this, "chatRoomID : ${intent.getStringExtra("chatRoomId")}", Toast.LENGTH_LONG).show()
-        Log.d("사진 URL", "사진 URL : ${intent.getStringExtra("myPicAddress")}")
+//        Log.d("사진 URL", "사진 URL : ${intent.getStringExtra("myPicAddress")}")
 
         val sharedPreferences = getSharedPreferences("UserCookie", Context.MODE_PRIVATE)
         myId = sharedPreferences.getString("user_id", "")
@@ -130,11 +130,12 @@ open class ChatRoomActivity : AppCompatActivity() {
         lateinit var myUserId:String
         // 액티비티 실행 여부 공유를 위한 변수
         var state = false
+        // 메시지와 대화방 매칭 결과 변수
+        var targetMessageIdx = 0
 
         // 새로 받은 메시지 추가 및 UI 갱신
-        fun addLastMessage(targetRoomID:String, targetUserId:String){
+        fun addLastMessage(targetRoomID:String, targetUserId:String):Boolean{
 
-            var targetMessageIdx = 0
             if (targetRoomID == thisRoomId){
                 val messageCursor = sqlite.loadLastMessageFromDB(targetRoomID)
                 while (messageCursor.moveToNext()){
@@ -162,22 +163,26 @@ open class ChatRoomActivity : AppCompatActivity() {
 
                 refreshUI()
 
-                if (targetUserId != myUserId){
-                    sqlite.inputReader(targetRoomID, targetMessageIdx, myUserId)
-                }
-                sqlite.inputReaders(messgeList, targetUserId)
+                sqlite.inputReader(targetRoomID, targetMessageIdx, myUserId)
+                Log.d("내가 메시지 읽은 거 DB 반영", "내가 메시지 읽은 거 DB 반영")
 
+                targetMessageIdx = 0
+                return true
             }
 
+            targetMessageIdx = 0
+            return false
         }
 
         // 메시지 읽음 처리 및 UI 갱신
-        fun refreshReadCount(targetRoomID:String, targetUserId:String){
+        fun refreshReadCount(targetRoomID:String, targetUserId:String):Boolean{
             if (targetRoomID == thisRoomId){
                 sqlite.inputReaders(messgeList, targetUserId)
                 reloadMessages()
                 refreshUI()
+                return true
             }
+            return false
         }
 
         // 메인스레드에서 DB에서 전체 메시지 불러오기
@@ -276,6 +281,11 @@ open class ChatRoomActivity : AppCompatActivity() {
 
         }
 
+    }
+
+    override fun onStop() {
+        super.onStop()
+        finish()
     }
 
     override fun onBackPressed() {
