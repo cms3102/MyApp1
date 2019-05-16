@@ -109,6 +109,12 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
         return readableDatabase.rawQuery(sql, null)
     }
 
+    // 최신 메시지 10개 불러오기
+    fun loadNewMessagesFromDB(chatRoomId:String):Cursor{
+        val sql = "select * from messages where chatroom_id = '$chatRoomId' order by message_idx desc limit 10"
+        return readableDatabase.rawQuery(sql, null)
+    }
+
     // 최근 추가된 메시지 불러오기
     fun loadLastMessageFromDB(chatRoomId:String):Cursor{
         val sql = "select * from messages where chatroom_id = '$chatRoomId' order by message_idx desc limit 1"
@@ -123,26 +129,36 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
 
     // 메시지 읽음 처리
     fun inputReaders(messages:MutableList<Message>, userId:String){
-        val db = writableDatabase
-        try {
-            db.beginTransaction()
-            for (message in messages){
-                val sql1 = "select * from readers where chatroom_id = '${message.chatroom_id}' and message_idx = ${message.message_idx} and user_id = '$userId'"
-                val result = db.rawQuery(sql1, null).count
-                if (result == 0){
-                    val sql2 = "insert into readers(chatroom_id, message_idx, user_id) values('${message.chatroom_id}', ${message.message_idx}, '$userId')"
-                    db.execSQL(sql2)
-                    val sql3 = "update messages set readcount = readcount - 1 where readcount > 0 and message_idx = ${message.message_idx}"
-                    db.execSQL(sql3)
+
+            val db = writableDatabase
+            try {
+                db.beginTransaction()
+                Log.d("SQLiteHelper","inputReaders 트랜잭션 시작됨")
+                for (message in messages){
+                    val sql1 = "select * from readers where chatroom_id = '${message.chatroom_id}' and message_idx = ${message.message_idx} and user_id = '$userId'"
+                    val resultCursor = db.rawQuery(sql1, null)
+                    try {
+                        if (resultCursor.count == 0){
+                            val sql2 = "insert into readers(chatroom_id, message_idx, user_id) values('${message.chatroom_id}', ${message.message_idx}, '$userId')"
+                            db.execSQL(sql2)
+                            val sql3 = "update messages set readcount = readcount - 1 where readcount > 0 and message_idx = ${message.message_idx}"
+                            db.execSQL(sql3)
+                        }
+                        resultCursor.close()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        resultCursor.close()
+                    }
                 }
+                db.setTransactionSuccessful()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                db.endTransaction()
+                Log.d("멀티 메시지 읽음 처리함","멀티 메시지 읽음 처리함")
             }
-            db.setTransactionSuccessful()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            db.endTransaction()
-            Log.d("멀티 메시지 읽음 처리함","멀티 메시지 읽음 처리함")
-        }
+
     }
 
     fun inputReader(chatRoomId: String, messageIdx:Int, userId:String){

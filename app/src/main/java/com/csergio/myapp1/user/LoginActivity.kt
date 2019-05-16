@@ -38,19 +38,25 @@ class LoginActivity : AppCompatActivity() {
         myId = preferences.getString("user_id", "")
         // 저장된 아이디가 있으면 자동 로그인 처리
         if (myId != ""){
+
             if (intent.getStringExtra("pushMessage") != null){
+
                 val chatRoomId = intent.getStringExtra("chatRoomId")
                 val intent = Intent(this, ChatRoomActivity::class.java)
                 intent.putExtra("chatRoomId", chatRoomId)
                 startActivity(intent)
-                Toast.makeText(this, "알람을 통해서 챗룸으로 이동", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, "알람을 통해서 챗룸으로 이동", Toast.LENGTH_SHORT).show()
                 finish()
+
             } else {
+
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
                 Toast.makeText(this, "자동 로그인되었습니다.", Toast.LENGTH_SHORT).show()
                 finish()
+
             }
+
         }
 
         loginActivity_signUpButton.setOnClickListener {
@@ -104,7 +110,8 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    fun requirePermissions(){
+    private fun requirePermissions(){
+
         Log.d("권한 요청 메소드 실행", "권한 요청 메소드 실행")
         val permissionList = mutableListOf<String>()
         permissionList.add(Manifest.permission.CAMERA)
@@ -123,4 +130,5 @@ class LoginActivity : AppCompatActivity() {
         }
 
     }
+
 }

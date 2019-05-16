@@ -78,22 +78,33 @@ open class ChatRoomActivity : AppCompatActivity() {
             io.emit("sendMessage", message, chatRoomID, myId, myName, myPicAddress)
 
             chatRoom_editText.text?.clear()
-            Log.d("메시지 전송", "메시지 전송함")
+//            Log.d("메시지 전송", "메시지 전송함")
 
         }
 
     }
 
     override fun onResume() {
+        Log.d("ChatRoomActivity", "ChatRoomActivity에서 onResume 실행됨")
         refreshReadCount(chatRoomID, myId)
         messgeList = messages
         io.emit("sendReaderInfo", myId, chatRoomID)
         super.onResume()
     }
 
+    fun refreshReadCount(){
+        for (message in messgeList){
+            val count = message.readcount.toInt()
+            if (count > 0){
+                message.readcount = (count - 1).toString()
+            }
+        }
+        refreshList()
+    }
+
     fun loadMessages(){
 
-        Log.d("loadMessages 실행됨", "loadMessages 실행됨")
+        Log.d("ChatRoomActivity", "ChatRoomActivity에서 loadMessages 시작됨")
         messages.clear()
 
         // DB에서 저장된 메시지 불러오기
@@ -113,6 +124,7 @@ open class ChatRoomActivity : AppCompatActivity() {
             messages.add(messageModel)
 
         }
+//        Log.d("ChatRoomActivity", "ChatRoomActivity에서 loadMessages 끝남")
 
     }
 
@@ -149,13 +161,10 @@ open class ChatRoomActivity : AppCompatActivity() {
                     messageModel.sender_pic = messageCursor.getString(4)
                     messageModel.content = messageCursor.getString(5)
                     messageModel.timestamp = messageCursor.getString(6)
-                    if (targetUserId == myUserId){
-                        messageModel.readcount = (messageCursor.getInt(7) - 1).toString()
-                    } else {
-                        messageModel.readcount = (messageCursor.getInt(7) - 2).toString()
-                    }
-                    Log.d("readcount1", "content : ${messageCursor.getString(5)} / readcount1 : ${messageCursor.getInt(7)}")
-                    Log.d("readcount1", "content : ${messageCursor.getString(5)} / readcount1 : ${messageModel.readcount}")
+                    // 남이 읽은 건 신호 받아서 처리하므로 내가 읽은 것만 처리
+                    messageModel.readcount = (messageCursor.getInt(7) - 1).toString()
+//                    Log.d("readcount1", "content : ${messageCursor.getString(5)} / readcount1 : ${messageCursor.getInt(7)}")
+//                    Log.d("readcount1", "content : ${messageCursor.getString(5)} / readcount1 : ${messageModel.readcount}")
 
                     messgeList.add(messageModel)
 
@@ -177,16 +186,17 @@ open class ChatRoomActivity : AppCompatActivity() {
         // 메시지 읽음 처리 및 UI 갱신
         fun refreshReadCount(targetRoomID:String, targetUserId:String):Boolean{
             if (targetRoomID == thisRoomId){
+                Log.d("ChatRoomActivity", "ChatRoomActivity에서 refreshReadCount 시작됨")
+                refreshReadCount()
                 sqlite.inputReaders(messgeList, targetUserId)
-                reloadMessages()
-                refreshUI()
+//                Log.d("ChatRoomActivity", "ChatRoomActivity에서 refreshReadCount 끝남")
                 return true
             }
             return false
         }
 
         // 메인스레드에서 DB에서 전체 메시지 불러오기
-        fun reloadMessages(){
+        fun refreshReadCount(){
             val msg = messageHandler.obtainMessage()
             messageHandler.handleMessage(msg)
         }
@@ -211,7 +221,7 @@ open class ChatRoomActivity : AppCompatActivity() {
     private val handlerForLoadingMessages = object : Handler(){
         override fun handleMessage(msg: android.os.Message?) {
             runOnUiThread {
-                loadMessages()
+                refreshReadCount()
             }
         }
     }

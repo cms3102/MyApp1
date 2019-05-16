@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat.getSystemService
 import com.csergio.myapp1.chat.ChatRoomActivity
 import com.csergio.myapp1.fragments.ChatFragment
 import com.csergio.myapp1.model.Message
@@ -65,7 +66,6 @@ class NotificationService : Service() {
 
                 // 받은 메시지 DB 저장
                 val newRowId = sqliteHelper.saveMessageToDB(message)
-                Log.d("메시지 인서트 결과", "메시지 인서트 결과 : $newRowId")
 
                 // 대화방 내 메시지 목록 갱신
                 if (ChatRoomActivity.state) {
@@ -74,7 +74,7 @@ class NotificationService : Service() {
                     Log.d("isRightRoom 결과", "isRightRoom 결과 : $isRightRoom")
                     // 위의 결과 값에 따라 내가 읽었다고 알림
                     if(isRightRoom){
-                        io.emit("sendReaderInfo", myId, message.chatroom_id, newRowId)
+                        io.emit("sendReaderInfo", myId, message.chatroom_id)
                     }
                 } else {
                     // 보낸 사람이 메시지 읽은 것 반영
@@ -110,19 +110,14 @@ class NotificationService : Service() {
                         Log.d("receiveReader", "챗룸 액티비티 실행 중")
                         val isRightRoom = ChatRoomActivity.refreshReadCount(chatRoomId, readerId)
                         if (!isRightRoom){
-                            if (it[2] != null){
-                                val messageIdx = it[2].toString().toInt()
-                                sqliteHelper.inputReader(chatRoomId, messageIdx, readerId)
-                            } else {
-                                loadMessages(chatRoomId, readerId)
-                            }
+                            loadMessages(chatRoomId, readerId, "part")
                         }
                     } else {
                         Log.d("receiveReader", "챗룸 액티비티 없음")
-                        loadMessages(chatRoomId, readerId)
+                        loadMessages(chatRoomId, readerId, "all")
                     }
-                }
 
+                }
             }
 
             io.connect()
@@ -141,6 +136,7 @@ class NotificationService : Service() {
     companion object {
 
         private val io = IO.socket("http://ec2-52-79-251-44.ap-northeast-2.compute.amazonaws.com:3000")
+//        private val io = IO.socket("http://192.168.0.13:8080")
 
         // 서비스 객체 중복 생성 방지를 위한 상태 변수
         var state = false
@@ -156,16 +152,34 @@ class NotificationService : Service() {
     }
 
     // DB에서 저장된 메시지 불러오기 및 읽음 처리
-    private fun loadMessages(room:String, reader:String){
+    private fun loadMessages(room:String, reader:String, mode:String){
+
         val messages = mutableListOf<Message>()
-        val messageCursor = sqliteHelper.loadMessagesFromDB(room)
-        while (messageCursor.moveToNext()) {
-            val messageModel = Message()
-            messageModel.message_idx = messageCursor.getInt(0)
-            messageModel.chatroom_id = messageCursor.getString(1)
-            messages.add(messageModel)
-        }
+            when(mode){
+                "all" -> {
+                    Log.d("NotificationService", "NotificationService에서 loadMessages(all) 실행됨")
+                    val messageCursor = sqliteHelper.loadMessagesFromDB(room)
+                    while (messageCursor.moveToNext()) {
+                        val messageModel = Message()
+                        messageModel.message_idx = messageCursor.getInt(0)
+                        messageModel.chatroom_id = messageCursor.getString(1)
+                        messages.add(messageModel)
+                    }
+                }
+                "part" -> {
+                    Log.d("NotificationService", "NotificationService에서 loadMessages(part) 실행됨")
+                    val messageCursor = sqliteHelper.loadNewMessagesFromDB(room)
+                    while (messageCursor.moveToNext()) {
+                        val messageModel = Message()
+                        messageModel.message_idx = messageCursor.getInt(0)
+                        messageModel.chatroom_id = messageCursor.getString(1)
+                        messages.add(messageModel)
+                    }
+                }
+            }
+
         sqliteHelper.inputReaders(messages, reader)
+
     }
 
     private fun createNotification(type: String, message: Message) {

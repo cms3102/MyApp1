@@ -43,14 +43,14 @@ class ChatFragment:Fragment() {
     }
 
     override fun onResume() {
-        Log.d("ChatFragment","에서 onResume 실행됨")
+//        Log.d("ChatFragment","에서 onResume 실행됨")
         loadRooms()
         refreshList()
         super.onResume()
     }
 
     private fun loadRooms(){
-        Log.d("ChatFragment","ChatFragment에서 loadRooms 실행됨")
+//        Log.d("ChatFragment","ChatFragment에서 loadRooms 실행됨")
         chatRoomList.clear()
         val cursor = sqliteHelper.loadChatRoomsFromDB()
         while (cursor.moveToNext()){
@@ -65,7 +65,7 @@ class ChatFragment:Fragment() {
     }
 
     private fun refreshList(){
-        Log.d("ChatFragment","ChatFragment에서 refreshList 실행됨")
+//        Log.d("ChatFragment","ChatFragment에서 refreshList 실행됨")
         chatFragment_recyclerView.layoutManager = LinearLayoutManager(context)
         chatFragment_recyclerView.adapter = ChatFragmentAdapter()
     }

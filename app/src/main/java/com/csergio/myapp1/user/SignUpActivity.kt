@@ -24,13 +24,17 @@ import java.util.*
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.AsyncTask
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.csergio.myapp1.MainActivity
+import com.csergio.myapp1.model.ChatRoom
+import com.google.gson.Gson
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import java.io.IOException
 
 
 class SignUpActivity : AppCompatActivity() {
@@ -68,12 +72,9 @@ class SignUpActivity : AppCompatActivity() {
                             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                             if(intent.resolveActivity(packageManager) != null){
                                 try {
+                                    createImageFile()
 
-                                    // 안드로이드 7.0부터 보안 문제로 Uri.fromFile() 오류 발생해서 FileProvider 써야 됨
-                                    val file = createImageFile()
-                                    val filUri = FileProvider.getUriForFile(this, packageName, file)
-
-                                    intent.putExtra(MediaStore.EXTRA_OUTPUT, filUri)
+                                    intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
                                     startActivityForResult(intent, PICK_FROM_CAMERA)
 
                                 } catch (e: Exception) {
@@ -136,11 +137,18 @@ class SignUpActivity : AppCompatActivity() {
 
                     override fun onFailure(call: Call<String>, t: Throwable) {
                         Toast.makeText(this@SignUpActivity, "프로필 이미지 업로드 실패", Toast.LENGTH_SHORT).show()
+                        t.printStackTrace()
                     }
 
                     override fun onResponse(call: Call<String>, response: Response<String>) {
+                        if (!response.isSuccessful){
+                            throw IOException("Failed to upload Image : $response")
+                        }
+
                         profileImageUri = response.body().toString()
+
 //                        Toast.makeText(this@SignUpActivity, "프로필 이미지 업로드 성공 : $profileImageUri", Toast.LENGTH_SHORT).show()
+                        Log.d("프로필 이미지 업로드 성공", "${response.body().toString()}")
 
                         val newUser = User()
                         newUser.user_id = email
@@ -153,6 +161,7 @@ class SignUpActivity : AppCompatActivity() {
                             .requestSignUpPost(newUser).enqueue(object : Callback<String> {
                             override fun onFailure(call: Call<String>, t: Throwable) {
                                 Toast.makeText(this@SignUpActivity, "회원 가입 실패", Toast.LENGTH_SHORT).show()
+                                t.printStackTrace()
                             }
 
                             override fun onResponse(call: Call<String>, response: Response<String>) {
@@ -197,8 +206,6 @@ class SignUpActivity : AppCompatActivity() {
                     }
 
                 })
-
-
 
         }
     }
@@ -255,6 +262,7 @@ class SignUpActivity : AppCompatActivity() {
         }
         Log.d("사진 저장 경로", "사진 저장 경로 : $storagePath")
         imageFile = File.createTempFile(fileName, ".jpg", storagePath)
+        // 안드로이드 7.0부터 보안 문제로 Uri.fromFile() 오류 발생해서 FileProvider 써야 됨
         imageUri = FileProvider.getUriForFile(this, packageName, imageFile)
         imageAbsolutePath = imageFile.absolutePath
 

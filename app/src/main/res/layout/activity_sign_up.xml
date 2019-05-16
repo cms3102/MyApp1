@@ -27,7 +27,8 @@
         <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="이메일을 입력해 주세요." android:id="@+id/signUpActivity_editText_email"/>
+                android:hint="이메일을 입력해 주세요." android:id="@+id/signUpActivity_editText_email"
+                android:inputType="textEmailAddress"/>
     </com.google.android.material.textfield.TextInputLayout>
     <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
@@ -41,7 +42,8 @@
         <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="비밀번호를 입력해 주세요." android:id="@+id/signUpActivity_editText_pw1"/>
+                android:hint="비밀번호를 입력해 주세요." android:id="@+id/signUpActivity_editText_pw1"
+                android:inputType="textPassword"/>
     </com.google.android.material.textfield.TextInputLayout>
     <androidx.constraintlayout.widget.Guideline
             android:orientation="horizontal"
@@ -59,7 +61,8 @@
         <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="비밀번호를 한 번 더 입력해 주세요." android:id="@+id/signUpActivity_editText_pw2"/>
+                android:hint="비밀번호를 한 번 더 입력해 주세요." android:id="@+id/signUpActivity_editText_pw2"
+                android:inputType="textPassword"/>
     </com.google.android.material.textfield.TextInputLayout>
     <Button
             android:text="가입하기"
@@ -79,6 +82,7 @@
         <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="이름을 입력해 주세요." android:id="@+id/signUpActivity_editText_name"/>
+                android:hint="이름을 입력해 주세요." android:id="@+id/signUpActivity_editText_name"
+                android:inputType="textWebEditText"/>
     </com.google.android.material.textfield.TextInputLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
