@@ -87,6 +87,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageSelected(position: Int) {
                 mainActivity_bottomNavigationView.menu.getItem(position).isChecked = true
+                setToolbarTitle(position)
             }
 
         })

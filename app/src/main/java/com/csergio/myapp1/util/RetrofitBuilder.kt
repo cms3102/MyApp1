@@ -7,7 +7,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitBuilder {
 
-
      val interceptor = Interceptor {
         val request = it.request().newBuilder().addHeader("Connection", "close").build()
         it.proceed(request)

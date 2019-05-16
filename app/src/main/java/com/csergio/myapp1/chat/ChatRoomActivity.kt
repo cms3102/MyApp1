@@ -20,7 +20,10 @@ import com.csergio.myapp1.util.SQLiteHelper
 import kotlinx.android.synthetic.main.activity_chat_room.*
 import kotlinx.android.synthetic.main.item_message.view.*
 
-open class ChatRoomActivity : AppCompatActivity() {
+/**
+ * 채팅 대화방 클래스
+ * */
+class ChatRoomActivity : AppCompatActivity() {
 
     private  val io = NotificationService.getIO()
     private var messages = mutableListOf<Message>()
