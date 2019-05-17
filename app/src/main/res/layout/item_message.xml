@@ -25,7 +25,7 @@
                 app:layout_constraintTop_toTopOf="parent" android:textColor="#313131"/>
         <TextView
                 android:text="내용"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content" android:id="@+id/item_message_content"
                 android:layout_marginTop="2dp" android:textColor="#313131"/>
         <LinearLayout

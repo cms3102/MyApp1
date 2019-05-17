@@ -188,8 +188,13 @@ class NotificationService : Service() {
 
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            val notificationChannel =
-                NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_DEFAULT)
+            var notificationChannel = NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_DEFAULT)
+            when(type){
+                "default" -> {
+                    notificationChannel = NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_NONE)
+                }
+            }
+
             notificationManager.createNotificationChannel(notificationChannel)
 
             val notificationBuilder = NotificationCompat.Builder(this@NotificationService, notificationChannel.id)
@@ -201,14 +206,10 @@ class NotificationService : Service() {
                     intent.putExtra("pushMessage", "pushMessage")
                     val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
                     notificationBuilder
-                        .setSmallIcon(R.drawable.logo)
+                        .setSmallIcon(R.drawable.icon2)
                         .setContentTitle(message.sender_name)
                         .setContentText(message.content)
                         .setContentIntent(pendingIntent)
-                }
-                "default" -> {
-                    notificationBuilder
-                        .setSmallIcon(R.drawable.logo)
                 }
             }
 

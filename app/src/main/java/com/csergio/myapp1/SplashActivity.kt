@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import com.csergio.myapp1.user.LoginActivity
+import com.google.android.material.animation.AnimationUtils
 
 class SplashActivity : AppCompatActivity() {
 
@@ -17,5 +18,10 @@ class SplashActivity : AppCompatActivity() {
             finish()
         }, 2000)
 
+    }
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 }
