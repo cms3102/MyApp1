@@ -5,4 +5,5 @@ class User {
     var user_pw = ""
     var user_name = ""
     var user_pic = ""
+    var state_message = ""
 }

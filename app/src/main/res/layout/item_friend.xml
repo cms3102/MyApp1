@@ -32,5 +32,5 @@
             app:layout_constraintBottom_toBottomOf="@+id/item_friend_profileImage"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="16dp" app:layout_constraintStart_toEndOf="@+id/item_friend_name"
-            android:layout_marginStart="16dp"/>
+            android:layout_marginStart="32dp" android:maxLength="20"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

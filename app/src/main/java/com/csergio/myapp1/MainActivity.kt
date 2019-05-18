@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
         when(index){
             0 -> supportActionBar?.title = "친구"
             1 -> supportActionBar?.title = "채팅"
-            2 -> supportActionBar?.title = "오락"
+            2 -> supportActionBar?.title = "준비 중"
             3 -> supportActionBar?.title = "설정"
             else -> supportActionBar?.title = ""
         }

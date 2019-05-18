@@ -102,6 +102,7 @@ class FriendsFragment:Fragment() {
                 .load(friend.user_pic)
                 .apply(RequestOptions.circleCropTransform())
                 .into(holder.profileImageView)
+            holder.stateMessageTextView.text = friend.state_message
 
             holder.itemView.setOnClickListener {
 

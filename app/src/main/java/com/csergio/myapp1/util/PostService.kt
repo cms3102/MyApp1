@@ -29,4 +29,7 @@ interface PostService {
     @POST("/upload/images")
     fun uploadProfileImage(@Part("user_id") userId:RequestBody, @Part image:MultipartBody.Part):Call<String>
 
+    @POST("/users/statemessage")
+    fun updateStateMessage(@Body user:User):Call<String>
+
 }
