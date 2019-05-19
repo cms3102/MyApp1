@@ -68,9 +68,9 @@ class ChatRoomActivity : AppCompatActivity() {
         adapter = chatRoomActivityAdapter
         recyclerView = chatRoom_recyclerView
 
-        chatRoom_sendButton.setOnClickListener {
+        chatRoomActivity_sendButton.setOnClickListener {
 
-            val message = chatRoom_editText.text.toString()
+            val message = chatRoomActivity_editText.text.toString()
 
             if (message.isEmpty()){
                 Toast.makeText(this, "메시지를 입력해 주세요.", Toast.LENGTH_SHORT).show()
@@ -80,7 +80,7 @@ class ChatRoomActivity : AppCompatActivity() {
             // 서버로 메시지 전송
             io.emit("sendMessage", message, chatRoomID, myId, myName, myPicAddress)
 
-            chatRoom_editText.text?.clear()
+            chatRoomActivity_editText.text?.clear()
 //            Log.d("메시지 전송", "메시지 전송함")
 
         }

@@ -27,20 +27,29 @@
             android:id="@+id/constraintLayout">
         <view android:layout_width="0dp" android:layout_height="0dp"
               class="androidx.appcompat.widget.AppCompatEditText"
-              id="@+id/view" app:layout_constraintStart_toStartOf="parent"
+              id="@+id/view"
               app:layout_constraintTop_toTopOf="parent"
               app:layout_constraintBottom_toBottomOf="parent"
-              app:layout_constraintEnd_toStartOf="@+id/chatRoom_sendButton"
-              android:layout_marginEnd="8dp" android:id="@+id/chatRoom_editText" android:layout_marginStart="8dp"
-              android:layout_marginTop="8dp" android:layout_marginBottom="8dp"/>
+              app:layout_constraintEnd_toStartOf="@+id/chatRoomActivity_sendButton"
+              android:layout_marginEnd="8dp" android:id="@+id/chatRoomActivity_editText"
+              android:layout_marginTop="8dp" android:layout_marginBottom="8dp"
+              app:layout_constraintStart_toEndOf="@+id/chatRoomActivity_button_sendFile" android:layout_marginStart="8dp"/>
         <Button
                 android:text="전송"
-                android:layout_width="wrap_content"
+                android:layout_width="70dp"
                 android:layout_height="wrap_content"
-                android:id="@+id/chatRoom_sendButton"
-                app:layout_constraintTop_toTopOf="@+id/chatRoom_editText"
-                app:layout_constraintBottom_toBottomOf="@+id/chatRoom_editText"
+                android:id="@+id/chatRoomActivity_sendButton"
+                app:layout_constraintTop_toTopOf="@+id/chatRoomActivity_editText"
+                app:layout_constraintBottom_toBottomOf="@+id/chatRoomActivity_editText"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_marginEnd="8dp"/>
+        <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" app:srcCompat="@drawable/baseline_add_box_black_48"
+                android:id="@+id/chatRoomActivity_button_sendFile"
+                android:background="@android:color/transparent" android:layout_marginTop="8dp"
+                app:layout_constraintTop_toTopOf="parent" android:layout_marginBottom="8dp"
+                app:layout_constraintBottom_toBottomOf="parent" android:layout_marginStart="8dp"
+                app:layout_constraintStart_toStartOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
