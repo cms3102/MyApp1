@@ -4,7 +4,7 @@
                                                    android:layout_height="match_parent">
     <view android:layout_width="0dp" android:layout_height="wrap_content"
           class="androidx.appcompat.widget.AppCompatEditText"
-          id="@+id/view3" app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="8dp"
+          app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="8dp"
           app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="8dp" android:layout_marginTop="8dp"
           app:layout_constraintTop_toTopOf="parent" android:hint="상태 메시지를 입력하세요."
           android:id="@+id/item_state_message_editText"/>

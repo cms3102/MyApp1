@@ -27,7 +27,6 @@
             android:id="@+id/constraintLayout">
         <view android:layout_width="0dp" android:layout_height="0dp"
               class="androidx.appcompat.widget.AppCompatEditText"
-              id="@+id/view"
               app:layout_constraintTop_toTopOf="parent"
               app:layout_constraintBottom_toBottomOf="parent"
               app:layout_constraintEnd_toStartOf="@+id/chatRoomActivity_sendButton"
