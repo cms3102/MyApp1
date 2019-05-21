@@ -108,7 +108,7 @@ class NotificationService : Service() {
 
                     if (ChatRoomActivity.state) {
                         Log.d("receiveReader", "챗룸 액티비티 실행 중")
-                        val isRightRoom = ChatRoomActivity.refreshReadCount(chatRoomId, readerId)
+                        val isRightRoom = ChatRoomActivity.refreshReadCountInCompanionObject(chatRoomId, readerId)
                         if (!isRightRoom){
                             loadMessages(chatRoomId, readerId, "part")
                         }
@@ -189,11 +189,6 @@ class NotificationService : Service() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             var notificationChannel = NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_DEFAULT)
-            when(type){
-                "default" -> {
-                    notificationChannel = NotificationChannel("notification_message", "메시지 알림", NotificationManager.IMPORTANCE_NONE)
-                }
-            }
 
             notificationManager.createNotificationChannel(notificationChannel)
 

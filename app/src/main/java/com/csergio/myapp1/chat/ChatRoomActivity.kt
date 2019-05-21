@@ -63,7 +63,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
         chatRoom_recyclerView.layoutManager = LinearLayoutManager(applicationContext)
         chatRoom_recyclerView.adapter = chatRoomActivityAdapter
-//        chatRoom_recyclerView.scrollToPosition(messages.lastIndex)
+        chatRoom_recyclerView.scrollToPosition(messages.lastIndex)
 
         adapter = chatRoomActivityAdapter
         recyclerView = chatRoom_recyclerView
@@ -89,7 +89,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
     override fun onResume() {
         Log.d("ChatRoomActivity", "ChatRoomActivity에서 onResume 실행됨")
-        refreshReadCount(chatRoomID, myId)
+        refreshReadCountInCompanionObject(chatRoomID, myId)
         messgeList = messages
         io.emit("sendReaderInfo", myId, chatRoomID)
         super.onResume()
@@ -173,7 +173,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
                 }
 
-                refreshUI()
+                refreshUIByHandler()
 
                 sqlite.inputReader(targetRoomID, targetMessageIdx, myUserId)
                 Log.d("내가 메시지 읽은 거 DB 반영", "내가 메시지 읽은 거 DB 반영")
@@ -187,11 +187,20 @@ class ChatRoomActivity : AppCompatActivity() {
         }
 
         // 메시지 읽음 처리 및 UI 갱신
-        fun refreshReadCount(targetRoomID:String, targetUserId:String):Boolean{
+        fun refreshReadCountInCompanionObject(targetRoomID:String, targetUserId:String):Boolean{
             if (targetRoomID == thisRoomId){
                 Log.d("ChatRoomActivity", "ChatRoomActivity에서 refreshReadCount 시작됨")
-                refreshReadCount()
-                sqlite.inputReaders(messgeList, targetUserId)
+                // 읽음 처리된 메시지 개수만큼 목록 뒤에서부터 readCount - 1 처리
+                val result = sqlite.inputReaders(messgeList, targetUserId)
+                if (result > 0){
+                    var index = messgeList.lastIndex
+                    for (i in 1..result){
+                        messgeList[index].readcount = (messgeList[index].readcount.toInt() - 1).toString()
+                        index--
+                    }
+                }
+                // 목록 새로고침
+                refreshUIByHandler()
 //                Log.d("ChatRoomActivity", "ChatRoomActivity에서 refreshReadCount 끝남")
                 return true
             }
@@ -199,13 +208,13 @@ class ChatRoomActivity : AppCompatActivity() {
         }
 
         // 메인스레드에서 DB에서 전체 메시지 불러오기
-        fun refreshReadCount(){
+        fun refreshReadCountByHandler(){
             val msg = messageHandler.obtainMessage()
             messageHandler.handleMessage(msg)
         }
 
         // 메인 스레드에서 UI 갱신하도록 처리
-        fun refreshUI(){
+        fun refreshUIByHandler(){
             val msg = refreshHandler.obtainMessage()
             refreshHandler.handleMessage(msg)
         }

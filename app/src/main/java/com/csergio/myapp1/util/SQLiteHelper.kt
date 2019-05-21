@@ -128,9 +128,10 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
     }
 
     // 메시지 읽음 처리
-    fun inputReaders(messages:MutableList<Message>, userId:String){
+    fun inputReaders(messages:MutableList<Message>, userId:String):Int{
 
             val db = writableDatabase
+            var count = 0
             try {
                 db.beginTransaction()
                 Log.d("SQLiteHelper","inputReaders 트랜잭션 시작됨")
@@ -143,10 +144,13 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                             db.execSQL(sql2)
                             val sql3 = "update messages set readcount = readcount - 1 where readcount > 0 and message_idx = ${message.message_idx}"
                             db.execSQL(sql3)
+                            count++
                         }
+                        Log.d("insertReaders", "인서트 카운트 : $count")
                         resultCursor.close()
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        return 0
                     } finally {
                         resultCursor.close()
                     }
@@ -154,8 +158,10 @@ class SQLiteHelper(context:Context):SQLiteOpenHelper(context, DATABASE_NAME, nul
                 db.setTransactionSuccessful()
             } catch (e: Exception) {
                 e.printStackTrace()
+                return 0
             } finally {
                 db.endTransaction()
+                return count
                 Log.d("멀티 메시지 읽음 처리함","멀티 메시지 읽음 처리함")
             }
 
