@@ -56,7 +56,9 @@
         </activity>
         <activity android:name=".user.LoginActivity">
         </activity>
-        <activity android:name=".chat.ChatRoomActivity">
+        <activity android:name=".chat.ChatRoomActivity"
+                  android:windowSoftInputMode="adjustPan"
+        >
         </activity>
         <activity android:name=".MainActivity">
         </activity>
